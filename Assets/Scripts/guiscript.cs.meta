@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 604f9c579df4054438995a263b286a93
+timeCreated: 1428383833
+licenseType: Free
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - myplane: {fileID: 100000, guid: f8b7905f7eb45bc4d9abbb80d2e08cb0, type: 2}
+  - mycube: {fileID: 100000, guid: eabab248a371b0e49ac50e946e51c635, type: 2}
+  - mymesh: {fileID: 100000, guid: 783cc033e42f4cd4a8e09bb5a28d784e, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
