@@ -80,9 +80,9 @@ Shader "OVRGUIShader"
 
 		Tags { "ForceSupported" = "True" "RenderType"="Overlay" } 
 
-		Lighting Off
+		Lighting Off 
 		Blend SrcAlpha OneMinusSrcAlpha 
-		Cull Off
+		Cull Off 
 		ZWrite Off 
 		Fog { Mode Off } 
 		ZTest Always 
