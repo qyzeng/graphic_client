@@ -25,11 +25,15 @@ public class ModifiableTerrain : MonoBehaviour
 				heights [i, j] = mRefHeightMap.GetPixel (i, j).grayscale;
 			}
 		}
-		mTerrainData.size = new Vector3 (terrainWidth, 1f, terrainHeight);
+		mTerrainData.heightmapResolution = Mathf.Max (terrainHeight, terrainWidth);
+		mTerrainData.size = new Vector3 (terrainWidth, mTerrainData.heightmapResolution, terrainHeight);
 		mTerrainData.SetHeights (0, 0, heights);
 		this.transform.position = new Vector3 (terrainWidth * 0.5f, 0, terrainHeight * 0.5f);
 		SplatPrototype[] splatPrototypes = new SplatPrototype[1];
-		splatPrototypes [0].texture = mRefTexture;
+		SplatPrototype newSplat = new SplatPrototype ();
+		newSplat.texture = mRefTexture;
+		newSplat.tileSize = new Vector2 (terrainWidth, terrainHeight);
+		splatPrototypes[0] = newSplat;
 		mTerrainData.splatPrototypes = splatPrototypes;
 
 	}

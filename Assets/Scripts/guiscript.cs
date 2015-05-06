@@ -470,7 +470,7 @@ public class guiscript : MonoBehaviour
 				break;
 					
 			case cmd_read_fractal_data:
-				string[] messageparts = message.Split ('|');
+				string[] messageparts = message.Split (',');
 				if (messageparts.Length > 1) {
 					string b64string = messageparts [1];
 					byte[] imagebytes = System.Convert.FromBase64String (b64string);
