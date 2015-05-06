@@ -481,6 +481,7 @@ public class guiscript : MonoBehaviour
 						splatTexColors [i] = splatTexColors [i].grayscale * Color.green;
 					}
 					mSplatTexturePtr.SetPixels (splatTexColors);
+					mSplatTexturePtr = mSplatTexturePtr.SwapXY ();
 					ModifiableTerrain modTerrain = FindObjectOfType<ModifiableTerrain> ();
 					if (modTerrain != null) {
 						modTerrain.SetNewTerrainData (mHeightMapTexturePtr, mSplatTexturePtr);
