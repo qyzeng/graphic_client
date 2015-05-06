@@ -16,4 +16,10 @@ public static class Utility
 		newTex.SetPixels (newColors);
 		return newTex;
 	}
+
+	public static int RoundUpToPowerTwo (this int value)
+	{
+		int powerTwoValue = Mathf.ClosestPowerOfTwo (value);
+		return (powerTwoValue < value) ? (powerTwoValue << 1) : powerTwoValue; 
+	}
 }

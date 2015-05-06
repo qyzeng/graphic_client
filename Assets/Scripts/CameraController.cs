@@ -26,14 +26,14 @@ public class CameraController : MonoBehaviour
 			gameObject.transform.Rotate (new Vector3 (0, 1.0F * speed * Time.deltaTime, 0));
 		if (Input.GetKey (KeyCode.T))
 			gameObject.transform.Rotate (new Vector3 (0, -1.0F * speed * Time.deltaTime, 0));
+		if (Input.GetMouseButton (1)) {
+			rotationX += Input.GetAxis ("Mouse X") * lookSpeed;
+			rotationY += Input.GetAxis ("Mouse Y") * lookSpeed;
+			rotationY = Mathf.Clamp (rotationY, -90, 90);
 		
-		rotationX += Input.GetAxis ("Mouse X") * lookSpeed;
-		rotationY += Input.GetAxis ("Mouse Y") * lookSpeed;
-		rotationY = Mathf.Clamp (rotationY, -90, 90);
-		
-		transform.localRotation = Quaternion.AngleAxis (rotationX, Vector3.up);
-		transform.localRotation *= Quaternion.AngleAxis (rotationY, Vector3.left);
-		
+			transform.localRotation = Quaternion.AngleAxis (rotationX, Vector3.up);
+			transform.localRotation *= Quaternion.AngleAxis (rotationY, Vector3.left);
+		}
 		transform.position += transform.forward * moveSpeed * Input.GetAxis ("Vertical");
 		transform.position += transform.right * moveSpeed * Input.GetAxis ("Horizontal");
 		
