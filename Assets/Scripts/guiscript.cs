@@ -267,234 +267,253 @@ public class guiscript : MonoBehaviour
 	{
 		myTCP = gameObject.AddComponent<s_TCP> ();
 		//new s_TCP();
-		myTCP.setupSocket ();
-		Debug.Log (myTCP.socketReady);
-		myTCP.writeSocket ("get me started");//request data
+		//myTCP.setupSocket ();
+		//Debug.Log (myTCP.socketReady);
+		//myTCP.writeSocket ("get me started");//request data
 		
 		//mySphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 		//mySphere.transform.position =new Vector3(0,0.5F,0);
+	}
+
+	void OnGUI ()
+	{
+		if (myTCP != null) {
+			if (!myTCP.socketReady) {
+				if (GUILayout.Button ("Start Listening")) {
+					myTCP.setupSocket ();
+					//Debug.Log (myTCP.socketReady);
+					myTCP.writeSocket ("get me started");
+				}
+			} else {
+				if (GUILayout.Button ("Stop Listening")) {
+					myTCP.closeSocket ();
+				}
+			}
+		}
 	}
 	
 	// Update is called once per frame
 	void Update ()
 	{
-		string message;
-		char cmd;
-		float x, y, z, s;
-		float dNx, dNz;
-		string [] parts;
-		GameObject r_clone;
-		GameObject m_clone;
-		GameObject game_obj;
-		int Nf;
-		int Nx, Nz;
-		Mesh thisMesh;
-		MeshFilter myMeshFilter;
+		if (myTCP != null && myTCP.socketReady) {
+			string message;
+			char cmd;
+			float x, y, z, s;
+			float dNx, dNz;
+			string [] parts;
+			GameObject r_clone;
+			GameObject m_clone;
+			GameObject game_obj;
+			int Nf;
+			int Nx, Nz;
+			Mesh thisMesh;
+			MeshFilter myMeshFilter;
 		
 
-		message = myTCP.readSocket ();
+			message = myTCP.readSocket ();
 			
-		if (message.Length > 0) {
-			Debug.Log ("Message " + message + "received.");
-			cmd = (char)message [0];
-			switch (cmd) {
-			case cmd_plane:
-				Debug.Log ("Plane received");
-				Instantiate (myplane);
-				break;
-			case cmd_cube:
-				Debug.Log ("Cube received");
-				parts = message.Split (',');
-				x = float.Parse (parts [1]);
-				y = float.Parse (parts [2]);
-				z = float.Parse (parts [3]);
-				s = float.Parse (parts [4]);
-				r_clone = Instantiate (mycube, new Vector3 (x, y, z), Quaternion.identity) as GameObject;
-				r_clone.transform.localScale = new Vector3 (s, s, s);
-				RegisterObject (r_clone);
-				break;
-			//				a, b, c = (int(i) for i in mystr.split()[1].split('.'))
-			case cmd_pmesh:
-				Debug.Log ("Band mesh received");
-				parts = message.Split (',');
-				Nf = parts.GetLength (0) - 1;//Number of floats, divide by 3 is 
-				var myfloats = new float[Nf];
+			if (message.Length > 0) {
+				Debug.Log ("Message " + message + "received.");
+				cmd = (char)message [0];
+				switch (cmd) {
+				case cmd_plane:
+					Debug.Log ("Plane received");
+					Instantiate (myplane);
+					break;
+				case cmd_cube:
+					Debug.Log ("Cube received");
+					parts = message.Split (',');
+					x = float.Parse (parts [1]);
+					y = float.Parse (parts [2]);
+					z = float.Parse (parts [3]);
+					s = float.Parse (parts [4]);
+					r_clone = Instantiate (mycube, new Vector3 (x, y, z), Quaternion.identity) as GameObject;
+					r_clone.transform.localScale = new Vector3 (s, s, s);
+					RegisterObject (r_clone);
+					break;
+				//				a, b, c = (int(i) for i in mystr.split()[1].split('.'))
+				case cmd_pmesh:
+					Debug.Log ("Band mesh received");
+					parts = message.Split (',');
+					Nf = parts.GetLength (0) - 1;//Number of floats, divide by 3 is 
+					var myfloats = new float[Nf];
 					
-				for (int i=1; i<parts.GetLength (0); i++)
-					myfloats [i - 1] = float.Parse (parts [i]);
+					for (int i=1; i<parts.GetLength (0); i++)
+						myfloats [i - 1] = float.Parse (parts [i]);
 					//check if Nf is Nm*3
 					
-				if (Mathf.Floor (Nf / 3.0F) != Nf / 3.0F) //we need Triplets, is there a modulus operator in C#?
+					if (Mathf.Floor (Nf / 3.0F) != Nf / 3.0F) //we need Triplets, is there a modulus operator in C#?
+						break;
+					m_clone = Instantiate (mymesh) as GameObject;
+					MeshFilter meshFilter = (MeshFilter)m_clone.GetComponent<MeshFilter> ();
+					meshFilter.mesh = CreateLinearMesh (.1F, myfloats);//To do the thickness should be transferred to the
+					RegisterObject (m_clone);
 					break;
-				m_clone = Instantiate (mymesh) as GameObject;
-				MeshFilter meshFilter = (MeshFilter)m_clone.GetComponent<MeshFilter> ();
-				meshFilter.mesh = CreateLinearMesh (.1F, myfloats);//To do the thickness should be transferred to the
-				RegisterObject (m_clone);
-				break;
-			case cmd_cmesh:
-				Debug.Log ("Cylinder mesh received");
-				parts = message.Split (',');
-				Nf = parts.GetLength (0) - 1;
+				case cmd_cmesh:
+					Debug.Log ("Cylinder mesh received");
+					parts = message.Split (',');
+					Nf = parts.GetLength (0) - 1;
 					//Nf=parts.GetLength(0)-1;//Number of floats, divide by 3 is 
 					//check if Nf is Nm*3
-				if (Mathf.Floor (Nf / 3.0F) != Nf / 3.0F) //we need Triplets, is there a modulus operator in C#?
+					if (Mathf.Floor (Nf / 3.0F) != Nf / 3.0F) //we need Triplets, is there a modulus operator in C#?
+						break;
+					
+					var myfloats1 = new float[Nf];
+					for (int i=1; i<parts.GetLength(0); i++)
+						myfloats1 [i - 1] = float.Parse (parts [i]);
+					
+					game_obj = Instantiate (mymesh) as GameObject;
+					myMeshFilter = (MeshFilter)game_obj.GetComponent<MeshFilter> ();
+					myMeshFilter.mesh = CreateCylinderMesh (0.1F, myfloats1);//calculate and attach mesh, R & points
+					RegisterObject (game_obj);
 					break;
+				case cmd_mmesh:
 					
-				var myfloats1 = new float[Nf];
-				for (int i=1; i<parts.GetLength(0); i++)
-					myfloats1 [i - 1] = float.Parse (parts [i]);
-					
-				game_obj = Instantiate (mymesh) as GameObject;
-				myMeshFilter = (MeshFilter)game_obj.GetComponent<MeshFilter> ();
-				myMeshFilter.mesh = CreateCylinderMesh (0.1F, myfloats1);//calculate and attach mesh, R & points
-				RegisterObject (game_obj);
-				break;
-			case cmd_mmesh:
-					
-				Debug.Log ("Planar Mesh generate");
-				parts = message.Split (',');
-				Nf = parts.GetLength (0) - 1;//Number of parameters
-				if (Nf < 8) {
-					Debug.Log ("Not enough data provided for planar mesh.");
-					break;
-				}
-				Nx = int.Parse (parts [1]);
-				Nz = int.Parse (parts [2]);
-				dNx = float.Parse (parts [3]);
-				dNz = float.Parse (parts [4]);
-				if (Nf != (Nx * Nz + 4)) {
-					Debug.Log ("Number of data points does not match definition.");
+					Debug.Log ("Planar Mesh generate");
+					parts = message.Split (',');
+					Nf = parts.GetLength (0) - 1;//Number of parameters
+					if (Nf < 8) {
+						Debug.Log ("Not enough data provided for planar mesh.");
+						break;
+					}
+					Nx = int.Parse (parts [1]);
+					Nz = int.Parse (parts [2]);
+					dNx = float.Parse (parts [3]);
+					dNz = float.Parse (parts [4]);
+					if (Nf != (Nx * Nz + 4)) {
+						Debug.Log ("Number of data points does not match definition.");
+						Debug.Log ("Nf: " + Nf.ToString ());
+						break;
+					}
+					var myfloats2 = new float[Nx * Nz];
 					Debug.Log ("Nf: " + Nf.ToString ());
-					break;
-				}
-				var myfloats2 = new float[Nx * Nz];
-				Debug.Log ("Nf: " + Nf.ToString ());
-				for (int i=0; i<(Nf-4); i++)
-					myfloats2 [i] = float.Parse (parts [i + 5]);
+					for (int i=0; i<(Nf-4); i++)
+						myfloats2 [i] = float.Parse (parts [i + 5]);
 					
-				game_obj = Instantiate (mymesh) as GameObject;
-				myMeshFilter = (MeshFilter)game_obj.GetComponent<MeshFilter> ();
-				Mesh meshC = CreatePlanarMesh (Nx, Nz, dNx, dNz, myfloats2);
-				Vector3[] vertices = meshC.vertices;
-				Color[] colors = new Color[vertices.Length];
-				int ii = 0;
-				while (ii < vertices.Length) {
-					colors [ii] = Color.Lerp (Color.grey, Color.green, (vertices [ii].y) / 20);
-					ii++;
-				}
-				meshC.colors = colors;
-				myMeshFilter.mesh = meshC;
-				Texture2D texture = new Texture2D (Nx, Nz);
-				game_obj.GetComponent<Renderer> ().material.mainTexture = texture;
+					game_obj = Instantiate (mymesh) as GameObject;
+					myMeshFilter = (MeshFilter)game_obj.GetComponent<MeshFilter> ();
+					Mesh meshC = CreatePlanarMesh (Nx, Nz, dNx, dNz, myfloats2);
+					Vector3[] vertices = meshC.vertices;
+					Color[] colors = new Color[vertices.Length];
+					int ii = 0;
+					while (ii < vertices.Length) {
+						colors [ii] = Color.Lerp (Color.grey, Color.green, (vertices [ii].y) / 20);
+						ii++;
+					}
+					meshC.colors = colors;
+					myMeshFilter.mesh = meshC;
+					Texture2D texture = new Texture2D (Nx, Nz);
+					game_obj.GetComponent<Renderer> ().material.mainTexture = texture;
 
-				int nh = 0;
-				while (nh < texture.width) {
-					int nw = 0;
-					while (nw < texture.height) {
-						texture.SetPixel (nw, nh, colors [nw + nh * texture.width]);
-						++nw;
+					int nh = 0;
+					while (nh < texture.width) {
+						int nw = 0;
+						while (nw < texture.height) {
+							texture.SetPixel (nw, nh, colors [nw + nh * texture.width]);
+							++nw;
+						}
+						++nh;
 					}
-					++nh;
-				}
-				texture.Apply ();
-				RegisterObject (game_obj);
-				break;
-			case cmd_mmesh_mod:
-				Debug.Log ("Planar Mesh modify");
-				parts = message.Split (',');
-				Nf = parts.GetLength (0) - 2;//Number of datapoints
-					
-				game_obj = (GameObject)graphicsArray [int.Parse (parts [1])];
-				thisMesh = (Mesh)game_obj.GetComponent<MeshFilter> ().mesh;
-				Vector3[] myvertices = thisMesh.vertices; 
-				for (int i =0; i<(int)myvertices.Length/2; i++) {
-					myvertices [i].y = float.Parse (parts [i + 2]);
-					myvertices [i + (int)(myvertices.Length / 2)].y = float.Parse (parts [i + 2]); //to do, currently unity crashes...
-				}
-				thisMesh.vertices = myvertices;
-				thisMesh.RecalculateNormals ();
-				break;
-			case cmd_obj_transform:
-				Debug.Log ("Planar Mesh transform");
-				parts = message.Split (',');
-				Nf = parts.GetLength (0) - 3;
-				char subcmd = (char)(parts [1]) [0];
-				switch (subcmd) {
-				case 'p'://Position
-					game_obj = (GameObject)graphicsArray [int.Parse (parts [2])];
-					game_obj.transform.position = new Vector3 (float.Parse (parts [3]), float.Parse (parts [4]), float.Parse (parts [5]));
+					texture.Apply ();
+					RegisterObject (game_obj);
 					break;
-				case 'r'://Rotation
-					game_obj = (GameObject)graphicsArray [int.Parse (parts [2])];
-					Quaternion target = Quaternion.Euler (float.Parse (parts [3]), float.Parse (parts [4]), float.Parse (parts [5]));
-					game_obj.transform.rotation = target;
-					break;
-				case 's'://Scale
-					game_obj = (GameObject)graphicsArray [int.Parse (parts [2])];
-					game_obj.transform.localScale = new Vector3 (float.Parse (parts [3]), float.Parse (parts [4]), float.Parse (parts [5]));
-					break;
-				}					
-				break;
-			case cmd_load_resource:
-				Debug.Log ("Load Resource");
-				parts = message.Split (',');
-				RegisterObject (Instantiate (Resources.Load<GameObject> (parts [1])) as GameObject);
-				break;
-			case cmd_destroy:
-				parts = message.Split (',');
-				if (graphicsArray [int.Parse (parts [1])] != null) {
-					Destroy ((GameObject)graphicsArray [int.Parse (parts [1])]);
-					graphicsArray [int.Parse (parts [1])] = null;
-					Debug.Log ("Object " + parts [1] + " deleted.");
-				}
-				break;
+				case cmd_mmesh_mod:
+					Debug.Log ("Planar Mesh modify");
+					parts = message.Split (',');
+					Nf = parts.GetLength (0) - 2;//Number of datapoints
 					
-			case cmd_sphere:
-				Debug.Log ("Sphere Mesh generate");
-				parts = message.Split (',');
-				int Nump = parts.GetLength (0) - 1;
-				Debug.Log (Nump);
-				GameObject mySphere = GameObject.CreatePrimitive (PrimitiveType.Sphere);
-				game_obj = Instantiate (mySphere) as GameObject;
-				game_obj.transform.position = new Vector3 (float.Parse (parts [2]), float.Parse (parts [3]), float.Parse (parts [4]));
-				game_obj.transform.localScale = new Vector3 (float.Parse (parts [1]), float.Parse (parts [1]), float.Parse (parts [1]));
-				RegisterObject (game_obj);
-				Destroy (mySphere);
-				break;
-			case cmd_sphere_mod:
-				Debug.Log ("Sphere Mesh modify");
-				parts = message.Split (',');
-				game_obj = (GameObject)graphicsArray [int.Parse (parts [1])];
-				game_obj.transform.position = new Vector3 (float.Parse (parts [2]), float.Parse (parts [3]), float.Parse (parts [4]));
-				Debug.Log ("good");
-				break;
-					
-			case cmd_read_fractal_data:
-				string[] messageparts = message.Split (',');
-				if (messageparts.Length > 1) {
-					string b64string = messageparts [1];
-					byte[] imagebytes = System.Convert.FromBase64String (b64string);
-					mHeightMapTexturePtr.LoadImage (imagebytes);
-					mSplatTexturePtr.LoadImage (imagebytes);
-					Color[] splatTexColors = mSplatTexturePtr.GetPixels ();
-					for (int i=0; i< splatTexColors.Length; ++i) {
-						splatTexColors [i] = splatTexColors [i].grayscale * Color.green;
+					game_obj = (GameObject)graphicsArray [int.Parse (parts [1])];
+					thisMesh = (Mesh)game_obj.GetComponent<MeshFilter> ().mesh;
+					Vector3[] myvertices = thisMesh.vertices; 
+					for (int i =0; i<(int)myvertices.Length/2; i++) {
+						myvertices [i].y = float.Parse (parts [i + 2]);
+						myvertices [i + (int)(myvertices.Length / 2)].y = float.Parse (parts [i + 2]); //to do, currently unity crashes...
 					}
-					mSplatTexturePtr.SetPixels (splatTexColors);
-					//mHeightMapTexturePtr = mHeightMapTexturePtr.SwapXY();
-					ModifiableTerrain modTerrain = FindObjectOfType<ModifiableTerrain> ();
-					if (modTerrain != null) {
-						modTerrain.SetNewTerrainData (mHeightMapTexturePtr, mSplatTexturePtr);
+					thisMesh.vertices = myvertices;
+					thisMesh.RecalculateNormals ();
+					break;
+				case cmd_obj_transform:
+					Debug.Log ("Planar Mesh transform");
+					parts = message.Split (',');
+					Nf = parts.GetLength (0) - 3;
+					char subcmd = (char)(parts [1]) [0];
+					switch (subcmd) {
+					case 'p'://Position
+						game_obj = (GameObject)graphicsArray [int.Parse (parts [2])];
+						game_obj.transform.position = new Vector3 (float.Parse (parts [3]), float.Parse (parts [4]), float.Parse (parts [5]));
+						break;
+					case 'r'://Rotation
+						game_obj = (GameObject)graphicsArray [int.Parse (parts [2])];
+						Quaternion target = Quaternion.Euler (float.Parse (parts [3]), float.Parse (parts [4]), float.Parse (parts [5]));
+						game_obj.transform.rotation = target;
+						break;
+					case 's'://Scale
+						game_obj = (GameObject)graphicsArray [int.Parse (parts [2])];
+						game_obj.transform.localScale = new Vector3 (float.Parse (parts [3]), float.Parse (parts [4]), float.Parse (parts [5]));
+						break;
+					}					
+					break;
+				case cmd_load_resource:
+					Debug.Log ("Load Resource");
+					parts = message.Split (',');
+					RegisterObject (Instantiate (Resources.Load<GameObject> (parts [1])) as GameObject);
+					break;
+				case cmd_destroy:
+					parts = message.Split (',');
+					if (graphicsArray [int.Parse (parts [1])] != null) {
+						Destroy ((GameObject)graphicsArray [int.Parse (parts [1])]);
+						graphicsArray [int.Parse (parts [1])] = null;
+						Debug.Log ("Object " + parts [1] + " deleted.");
 					}
-				}
+					break;
+					
+				case cmd_sphere:
+					Debug.Log ("Sphere Mesh generate");
+					parts = message.Split (',');
+					int Nump = parts.GetLength (0) - 1;
+					Debug.Log (Nump);
+					GameObject mySphere = GameObject.CreatePrimitive (PrimitiveType.Sphere);
+					game_obj = Instantiate (mySphere) as GameObject;
+					game_obj.transform.position = new Vector3 (float.Parse (parts [2]), float.Parse (parts [3]), float.Parse (parts [4]));
+					game_obj.transform.localScale = new Vector3 (float.Parse (parts [1]), float.Parse (parts [1]), float.Parse (parts [1]));
+					RegisterObject (game_obj);
+					Destroy (mySphere);
+					break;
+				case cmd_sphere_mod:
+					Debug.Log ("Sphere Mesh modify");
+					parts = message.Split (',');
+					game_obj = (GameObject)graphicsArray [int.Parse (parts [1])];
+					game_obj.transform.position = new Vector3 (float.Parse (parts [2]), float.Parse (parts [3]), float.Parse (parts [4]));
+					Debug.Log ("good");
+					break;
+					
+				case cmd_read_fractal_data:
+					string[] messageparts = message.Split (',');
+					if (messageparts.Length > 1) {
+						string b64string = messageparts [1];
+						byte[] imagebytes = System.Convert.FromBase64String (b64string);
+						mHeightMapTexturePtr.LoadImage (imagebytes);
+						mSplatTexturePtr.LoadImage (imagebytes);
+						Color[] splatTexColors = mSplatTexturePtr.GetPixels ();
+						for (int i=0; i< splatTexColors.Length; ++i) {
+							splatTexColors [i] = splatTexColors [i].grayscale * Color.green;
+						}
+						mSplatTexturePtr.SetPixels (splatTexColors);
+						//mHeightMapTexturePtr = mHeightMapTexturePtr.SwapXY();
+						ModifiableTerrain modTerrain = FindObjectOfType<ModifiableTerrain> ();
+						if (modTerrain != null) {
+							modTerrain.SetNewTerrainData (mHeightMapTexturePtr, mSplatTexturePtr);
+						}
+					}
 
-				break;
-			default:
-				Debug.Log ("Unknown command");
-				break;
-			}
-		} else
-			return;
+					break;
+				default:
+					Debug.Log ("Unknown command");
+					break;
+				}
+			} else
+				return;
+		}
 	}
 	
 }
