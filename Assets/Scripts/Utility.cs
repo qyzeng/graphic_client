@@ -22,4 +22,11 @@ public static class Utility
 		int powerTwoValue = Mathf.ClosestPowerOfTwo (value);
 		return (powerTwoValue < value) ? (powerTwoValue << 1) : powerTwoValue; 
 	}
+
+	public static void ParseStringForNDimArray (string strToParse, ref int dim, ref object array, string delim = "|")
+	{
+		string[] parameters = strToParse.Split (delim.ToCharArray ());
+		dim = int.TryParse (parameters [0], out dim) ? dim : 1;
+		int[] arraySizes = new int[dim];
+	}
 }
