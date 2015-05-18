@@ -3,9 +3,6 @@ using System.Collections;
 
 public class CustomCameraController : MonoBehaviour
 {
-
-	
-	
 	//add update codes
 	public float speed = 10.0F;
 	float lookSpeed = 15.0F;
