@@ -28,5 +28,6 @@ public static class Utility
 		string[] parameters = strToParse.Split (delim.ToCharArray ());
 		dim = int.TryParse (parameters [0], out dim) ? dim : 1;
 		int[] arraySizes = new int[dim];
+
 	}
 }

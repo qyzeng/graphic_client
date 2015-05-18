@@ -51,11 +51,10 @@ public class OVRTracker
 	/// <summary>
 	/// If true, a tracker is attached to the system.
 	/// </summary>
-	public bool isPresent
-	{
-	    get {
+	public bool isPresent {
+		get {
 #if !UNITY_ANDROID || UNITY_EDITOR
-			return (OVRManager.capiHmd.GetTrackingState().StatusFlags & (uint)StatusBits.PositionConnected) != 0;
+			return (OVRManager.capiHmd.GetTrackingState ().StatusFlags & (uint)StatusBits.PositionConnected) != 0;
 #else
 			return false;
 #endif
@@ -65,11 +64,10 @@ public class OVRTracker
 	/// <summary>
 	/// If true, the tracker can see and track the HMD. Otherwise the HMD may be occluded or the system may be malfunctioning.
 	/// </summary>
-	public bool isPositionTracked
-	{
+	public bool isPositionTracked {
 		get {
 #if !UNITY_ANDROID || UNITY_EDITOR
-			return (OVRManager.capiHmd.GetTrackingState().StatusFlags & (uint)StatusBits.PositionTracked) != 0;
+			return (OVRManager.capiHmd.GetTrackingState ().StatusFlags & (uint)StatusBits.PositionTracked) != 0;
 #else
 			return false;
 #endif
@@ -79,11 +77,10 @@ public class OVRTracker
 	/// <summary>
 	/// If this is true and a tracker is available, the system will use position tracking when isPositionTracked is also true.
 	/// </summary>
-	public bool isEnabled
-	{
+	public bool isEnabled {
 		get {
 #if !UNITY_ANDROID || UNITY_EDITOR
-			uint trackingCaps = OVRManager.capiHmd.GetDesc().TrackingCaps;
+			uint trackingCaps = OVRManager.capiHmd.GetDesc ().TrackingCaps;
 			return (trackingCaps & (uint)TrackingCaps.Position) != 0;
 #else
 			return false;
@@ -97,7 +94,7 @@ public class OVRTracker
 			if (value)
 				trackingCaps |= (uint)TrackingCaps.Position;
 
-			OVRManager.capiHmd.ConfigureTracking(trackingCaps, 0);
+			OVRManager.capiHmd.ConfigureTracking (trackingCaps, 0);
 #endif
 		}
 	}
@@ -105,11 +102,10 @@ public class OVRTracker
 	/// <summary>
 	/// Gets the tracker's viewing frustum.
 	/// </summary>
-	public Frustum frustum
-	{
+	public Frustum frustum {
 		get {
 #if !UNITY_ANDROID || UNITY_EDITOR
-			HmdDesc desc = OVRManager.capiHmd.GetDesc();
+			HmdDesc desc = OVRManager.capiHmd.GetDesc ();
 
 			return new Frustum
 			{
@@ -131,12 +127,12 @@ public class OVRTracker
 	/// <summary>
 	/// Gets the tracker's pose, relative to the head's pose at the time of the last pose recentering.
 	/// </summary>
-	public OVRPose GetPose(double predictionTime = 0d)
+	public OVRPose GetPose (double predictionTime = 0d)
 	{
 #if !UNITY_ANDROID || UNITY_EDITOR
-		double abs_time_plus_pred = Hmd.GetTimeInSeconds() + predictionTime;
+		double abs_time_plus_pred = Hmd.GetTimeInSeconds () + predictionTime;
 
-		return OVRManager.capiHmd.GetTrackingState(abs_time_plus_pred).CameraPose.ToPose();
+		return OVRManager.capiHmd.GetTrackingState (abs_time_plus_pred).CameraPose.ToPose ();
 #else
 		return new OVRPose
 		{

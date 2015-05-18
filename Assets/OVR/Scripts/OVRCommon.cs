@@ -33,26 +33,26 @@ public static class OVRExtensions
 	/// </summary>
 	/// <returns>The matrix as a Unity Matrix4x4.</returns>
 	/// <param name="ovrMat">The matrix as a Matrix4f.</param>
-	public static Matrix4x4 ToMatrix4x4(this Matrix4f ovrMat)
+	public static Matrix4x4 ToMatrix4x4 (this Matrix4f ovrMat)
 	{
-        Matrix4x4 mat = new Matrix4x4();
+		Matrix4x4 mat = new Matrix4x4 ();
 
-		mat[0, 0] = ovrMat.m[0, 0];
-		mat[0, 1] = ovrMat.m[0, 1];
-		mat[0, 2] = ovrMat.m[0, 2];
-		mat[0, 3] = ovrMat.m[0, 3];
-		mat[1, 0] = ovrMat.m[1, 0];
-		mat[1, 1] = ovrMat.m[1, 1];
-		mat[1, 2] = ovrMat.m[1, 2];
-		mat[1, 3] = ovrMat.m[1, 3];
-		mat[2, 0] = ovrMat.m[2, 0];
-		mat[2, 1] = ovrMat.m[2, 1];
-		mat[2, 2] = ovrMat.m[2, 2];
-		mat[2, 3] = ovrMat.m[2, 3];
-		mat[3, 0] = ovrMat.m[3, 0];
-		mat[3, 1] = ovrMat.m[3, 1];
-		mat[3, 2] = ovrMat.m[3, 2];
-		mat[3, 3] = ovrMat.m[3, 3];
+		mat [0, 0] = ovrMat.m [0, 0];
+		mat [0, 1] = ovrMat.m [0, 1];
+		mat [0, 2] = ovrMat.m [0, 2];
+		mat [0, 3] = ovrMat.m [0, 3];
+		mat [1, 0] = ovrMat.m [1, 0];
+		mat [1, 1] = ovrMat.m [1, 1];
+		mat [1, 2] = ovrMat.m [1, 2];
+		mat [1, 3] = ovrMat.m [1, 3];
+		mat [2, 0] = ovrMat.m [2, 0];
+		mat [2, 1] = ovrMat.m [2, 1];
+		mat [2, 2] = ovrMat.m [2, 2];
+		mat [2, 3] = ovrMat.m [2, 3];
+		mat [3, 0] = ovrMat.m [3, 0];
+		mat [3, 1] = ovrMat.m [3, 1];
+		mat [3, 2] = ovrMat.m [3, 2];
+		mat [3, 3] = ovrMat.m [3, 3];
 
 		return mat;
 	}
@@ -62,9 +62,9 @@ public static class OVRExtensions
 	/// </summary>
 	/// <returns>The size as a Unity Vector2.</returns>
 	/// <param name="size">The size as a C# Sizei.</param>
-	public static Vector2 ToVector2(this Sizei size)
+	public static Vector2 ToVector2 (this Sizei size)
 	{
-		return new Vector2(size.w, size.h);
+		return new Vector2 (size.w, size.h);
 	}
 
 	/// <summary>
@@ -72,9 +72,9 @@ public static class OVRExtensions
 	/// </summary>
 	/// <returns>The vector as a Unity Vector2.</returns>
 	/// <param name="size">The vector as a C# Vector2i.</param>
-	public static Vector2 ToVector2(this Vector2i vec)
+	public static Vector2 ToVector2 (this Vector2i vec)
 	{
-		return new Vector2(vec.x, vec.y);
+		return new Vector2 (vec.x, vec.y);
 	}
 
 	/// <summary>
@@ -82,9 +82,9 @@ public static class OVRExtensions
 	/// </summary>
 	/// <returns>The vector as a Unity Vector2.</returns>
 	/// <param name="size">The vector as a C# Vector2.</param>
-	public static Vector2 ToVector2(this Vector2f vec)
+	public static Vector2 ToVector2 (this Vector2f vec)
 	{
-		return new Vector2(vec.x, vec.y);
+		return new Vector2 (vec.x, vec.y);
 	}
 
 	/// <summary>
@@ -92,9 +92,9 @@ public static class OVRExtensions
 	/// </summary>
 	/// <returns>The vector as a Unity Vector3.</returns>
 	/// <param name="size">The vector as a C# Vector3.</param>
-	public static Vector3 ToVector3(this Vector3f vec, bool rhToLh = true)
+	public static Vector3 ToVector3 (this Vector3f vec, bool rhToLh = true)
 	{
-		Vector3 v = new Vector3(vec.x, vec.y, vec.z);
+		Vector3 v = new Vector3 (vec.x, vec.y, vec.z);
 
 		if (rhToLh)
 			v.z = -v.z;
@@ -107,12 +107,11 @@ public static class OVRExtensions
 	/// </summary>
 	/// <returns>The quaternion as a Unity Quaternion.</returns>
 	/// <param name="size">The quaternion as a C# Quatf.</param>
-	public static Quaternion ToQuaternion(this Quatf quat, bool rhToLh = true)
+	public static Quaternion ToQuaternion (this Quatf quat, bool rhToLh = true)
 	{
-		Quaternion q = new Quaternion(quat.x, quat.y, quat.z, quat.w);
+		Quaternion q = new Quaternion (quat.x, quat.y, quat.z, quat.w);
 
-		if (rhToLh)
-		{
+		if (rhToLh) {
 			q.x = -q.x;
 			q.y = -q.y;
 		}
@@ -125,7 +124,7 @@ public static class OVRExtensions
 	/// </summary>
 	/// <returns>The pose as a Unity OVRPose.</returns>
 	/// <param name="size">The pose as a C# Posef.</param>
-	public static OVRPose ToPose(this Posef pose, bool rhToLh = true)
+	public static OVRPose ToPose (this Posef pose, bool rhToLh = true)
 	{
 		return new OVRPose
 		{

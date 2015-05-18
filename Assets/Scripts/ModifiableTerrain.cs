@@ -14,10 +14,16 @@ public class ModifiableTerrain : MonoBehaviour
 
 	public float InterpolationTime = 10f;
 
+	public enum MODIFYSTATE
+	{
+		FREE = 0,
+		BUSY = 1,
+	}
+
 	// Use this for initialization
 	void Start ()
 	{
-		mTerrainData = this.GetComponent<Terrain> ().terrainData;	
+		mTerrainData = this.GetComponent<Terrain> ().terrainData;
 	}
 
 	private void UpdateTerrain ()
@@ -60,35 +66,43 @@ public class ModifiableTerrain : MonoBehaviour
 			splatPrototypes [0] = newSplat;
 			mTerrainData.splatPrototypes = splatPrototypes;
 		} else {
-			mTerrainData.splatPrototypes [0].texture.Resize (mRefTexture.width, mRefTexture.height);
+			mTerrainData.splatPrototypes [0].texture.Resize (mRefTexture.width, mRefTexture.height, TextureFormat.ARGB32, false);
 			mTerrainData.splatPrototypes [0].texture.Apply ();
 			mTerrainData.splatPrototypes [0].tileSize = new Vector2 (mRefTexture.width, mRefTexture.height);
 		}
+		
+		//this.GetComponent<Terrain> ().materialTemplate.SetTexture ("Base", mTerrainData.splatPrototypes [0].texture);
 		StartCoroutine (InterpolateTerrain ());
+	}
+
+	private void InterpolateTerrainValue (float interpolateValue)
+	{
+		for (int y=0; y<=mCurrentHeights.GetUpperBound(1); ++y) {
+			for (int x=0; x<=mCurrentHeights.GetUpperBound(0); ++x) {
+				mCurrentHeights [x, y] = Mathf.Lerp (mCurrentHeights [x, y], mTargetHeights [x, y], interpolateValue);
+			}
+		}
+		mTerrainData.SetHeights (0, 0, mCurrentHeights);
+		Texture2D splatTex = mTerrainData.splatPrototypes [0].texture;
+		Color[] colors = splatTex.GetPixels ();
+		Color[] targetColors = mRefTexture.GetPixels ();
+		for (int i = 0; i < colors.Length; ++i) {
+			colors [i] = Color.Lerp (colors [i], targetColors [i], interpolateValue);
+		}
+		splatTex.SetPixels (colors);
+		splatTex.Apply ();
 	}
 
 	private IEnumerator InterpolateTerrain ()
 	{
 		float currentTime = 0f;
 		while (currentTime <= InterpolationTime) {
-			for (int y=0; y<=mCurrentHeights.GetUpperBound(1); ++y) {
-				for (int x=0; x<=mCurrentHeights.GetUpperBound(0); ++x) {
-					mCurrentHeights [x, y] = Mathf.Lerp (mCurrentHeights [x, y], mTargetHeights [x, y], currentTime / InterpolationTime);
-				}
-			}
-			mTerrainData.SetHeights (0, 0, mCurrentHeights);
-			Texture2D splatTex = mTerrainData.splatPrototypes [0].texture;
-			Color[] colors = splatTex.GetPixels ();
-			Color[] targetColors = mRefTexture.GetPixels ();
-			for (int i = 0; i < colors.Length; ++i) {
-				colors [i] = Color.Lerp (colors [i], targetColors [i], currentTime / InterpolationTime);
-			}
-			splatTex.SetPixels (colors);
-			splatTex.Apply ();
+			float interpolationValue = currentTime / InterpolationTime;
+			InterpolateTerrainValue (interpolationValue);
 			yield return new WaitForEndOfFrame ();
 			currentTime += Time.deltaTime;
 		}
-
+		InterpolateTerrainValue (1f);
 		yield return null;
 	}
 

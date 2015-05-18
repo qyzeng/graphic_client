@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 6f039b0c6d8bc9040bb9542a938f0842
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - JoystickPrefabReference: {fileID: 100004, guid: eeaff5d5d7ef96b41ba660f5052e6e4a,
+      type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
