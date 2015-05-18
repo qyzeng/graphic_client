@@ -20,6 +20,9 @@ public class guiscript : MonoBehaviour
 	const char cmd_load_resource = 'L';//Load resource "L,coordinates" loads the resource named "coordinates", retuns object number
 
 	const char cmd_read_fractal_data = 'F';
+	const char cmd_readmesh = 'R';//Make mesh by vertices and triangles
+
+	const char cmd_drawcolor = 'd';//draw color of the isosurface
 
 	public GameObject myplane;
 	public GameObject mycube;
@@ -505,8 +508,44 @@ public class guiscript : MonoBehaviour
 							modTerrain.SetNewTerrainData (mHeightMapTexturePtr, mSplatTexturePtr);
 						}
 					}
-
 					break;
+
+				case cmd_readmesh:
+					Debug.Log("Read Mesh");
+					parts = message.Split('|');
+					int N_vertices = int.Parse(parts[1]);
+					int N_triangles =int.Parse(parts[2]);
+					
+					int Num= parts.GetLength(0);
+					var my_vertices= new float[N_vertices*3];
+					for (int i=0;i<(N_vertices*3);i++)
+					{
+						my_vertices[i]=float.Parse(parts[i+3]);//(float.TryParse (parts[i+3], out my_vertices[i]))? my_vertices[i] : 0f;
+					}
+					var my_triangles = new int[N_triangles*3];
+					
+					for (int i =0;i<(N_triangles*3);i++)
+					{
+						my_triangles[i]=int.Parse (parts[i+3+N_vertices*3]);
+					}
+					
+					game_obj = Instantiate (mymesh) as GameObject;
+					myMeshFilter = (MeshFilter)game_obj.GetComponent<MeshFilter>();
+					myMeshFilter.mesh = MakeMesh(N_vertices,my_vertices,N_triangles,my_triangles);// attach mesh
+					//myMeshFilter.mesh.colors = ColorVertices(myMeshFilter.mesh.vertices,0.9f);
+					RegisterObject(game_obj);
+					break;
+
+				case cmd_drawcolor:
+					Debug.Log("Draw color");
+					parts = message.Split('|');
+					int N_obj = int.Parse(parts[1]);
+					float isovalue = float.Parse(parts[2]);
+					game_obj = (GameObject)graphicsArray[N_obj];
+					myMeshFilter = (MeshFilter)game_obj.GetComponent<MeshFilter>();
+					myMeshFilter.mesh.colors = ColorVertices(myMeshFilter.mesh.vertices,isovalue,myMeshFilter.mesh.bounds.center);
+					break;
+
 				default:
 					Debug.Log ("Unknown command");
 					break;
@@ -515,5 +554,142 @@ public class guiscript : MonoBehaviour
 				return;
 		}
 	}
+	Mesh MakeMesh(int N_vertices,float[] myvertices,int N_triangles,int[] mytriangles)
+	{
+		Mesh m = new Mesh ();
+		
+		var my_vertices = new Vector3[N_vertices];
+		var my_uv = new Vector2[N_vertices];
+		var my_triangles = mytriangles;
+		for (int i = 0; i < N_vertices; i++)
+		{
+			my_vertices[i]= new Vector3(myvertices[i*3],myvertices[i*3+1],myvertices[i*3+2]);
+			my_uv[i]=new Vector2(my_vertices[i].x, my_vertices[i].z);
+		}
+		for (int i = 0; i < N_triangles*3; i++)
+		{
+			//my_triangles[i]= mytriangles[i]-1; need to be careful count from 0 or 1,gts is from 1, so need a minus
+			my_triangles[i]= mytriangles[i];
+		}
+		m.vertices = my_vertices;
+		m.uv = my_uv;
+		m.RecalculateBounds();
+		m.triangles = my_triangles;
+		m.RecalculateNormals ();
+		m=MakeDoubleSided(m);
+		m.RecalculateNormals();
+		return m;
+	}
+
+	// make reversed mesh instead of double mesh, because mesh can not be more than 64k
+	Mesh MakeReversedMesh(Mesh mesh)
+	{
+		var vertices = mesh.vertices;
+		var uv = mesh.uv;
+		var normals = mesh.normals;
+		var szV = vertices.Length;
+		var szN = normals.Length;
+		for (int i=0; i<szN; i++) {
+			normals[i]= -mesh.normals[i];
+		}
+		Mesh newMesh = new Mesh ();
+		newMesh.vertices = mesh.vertices;
+		newMesh.uv = mesh.uv;
+		newMesh.normals = normals;
+		newMesh.triangles = mesh.triangles;// assign triangles last!
+		return newMesh;
+	}
 	
+	// color the vertices by HSL color according to ligthness value and center point 
+	Color[] ColorVertices(Vector3[] vertices, float value,Vector3 center)
+	{
+		Color[] mcolors = new Color[vertices.Length];
+		int ii = 0;
+		//float[] arguments = new float[vertices.Length];
+		float argument = 0f;
+		float saturation = 1.0f;
+		float lightness = value;
+		while (ii < vertices.Length) {
+			argument = Mathf.Atan2(vertices[ii].y-center.y,vertices[ii].x-center.x)*180/Mathf.PI;
+			if (argument < 0f) argument = 360f+argument;
+			float hue = argument;
+			//isosurface value
+			/*Vector3 mcolor = vertices[ii].normalized;
+			float hue = mcolor.x;
+			float saturation = mcolor.y;//isosurface value
+			float lightness = mcolor.z;//isosurface value*/
+			Vector3 mRGB = HslToRgb(hue, saturation, lightness);
+			mcolors [ii].a =0f;
+			mcolors [ii].r =mRGB.x;
+			mcolors [ii].g =mRGB.y;
+			mcolors [ii].b =mRGB.z;
+			ii++;
+		}
+		return mcolors;
+	}
+	/**
+	* Converts an HSL color value to RGB. Conversion formula
+			* Assumes h, s, and l are contained in the set [0, 1] and
+			* returns r, g, and b in the set [0, 1].
+			*
+			* @param   Number  h       The hue
+			* @param   Number  s       The saturation
+			* @param   Number  l       The lightness
+			* @return  Array           The RGB representation
+			* */
+	Vector3 HslToRgb(float h, float s, float l){
+		float r1 = 0f;
+		float g1 = 0f;
+		float b1 = 0f;
+		float m = 0f;
+		if (s == 0) {
+			r1 = l;
+			g1 = l;
+			b1 = l;
+		} else {
+			float _h = h / 60f;
+			int i = (int)(_h);
+			//Debug.Log (i);
+			float c = (1f - Mathf.Abs(2*l - 1f)) * s;
+			float x = c*(1-Mathf.Abs((h/60f)%2-1f));
+			m = l - c / 2f;
+			
+			switch (i) {
+			case 0:
+				r1 = c;
+				g1 = x;
+				b1 = 0f;
+				break;
+			case 1:
+				r1 = x;
+				g1 = c;
+				b1 = 0f;
+				break;
+			case 2:
+				r1 = 0f;
+				g1 = c;
+				b1 = x;
+				break;
+			case 3:
+				r1 = 0f;
+				g1 = x;
+				b1 = c;
+				break;
+			case 4:
+				r1 = x;
+				g1 = 0f;
+				b1 = c;
+				break;
+			case 5:
+				r1 = c;
+				g1 = 0f;
+				b1 = x;
+				break;
+			default:
+				break;
+			}
+		}
+		Vector3 mcolor = new Vector3(r1+m, g1+m, b1+m);
+		return mcolor;
+	}
 }
