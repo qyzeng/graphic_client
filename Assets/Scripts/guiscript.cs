@@ -541,9 +541,20 @@ public class guiscript : MonoBehaviour
 					parts = message.Split('|');
 					int N_obj = int.Parse(parts[1]);
 					float isovalue = float.Parse(parts[2]);
+					int N_wphase = int.Parse(parts[3]);
+					var my_wphase = new float[N_wphase*2];
+					for (int i=0;i<N_wphase;i++)
+					{
+						my_wphase[i] = float.Parse(parts[3+1+i]);
+					}
+					for (int i=N_wphase;i<N_wphase*2;i++)
+					{
+						my_wphase[i] = my_wphase[i-N_wphase];
+					}
 					game_obj = (GameObject)graphicsArray[N_obj];
 					myMeshFilter = (MeshFilter)game_obj.GetComponent<MeshFilter>();
-					myMeshFilter.mesh.colors = ColorVertices(myMeshFilter.mesh.vertices,isovalue,myMeshFilter.mesh.bounds.center);
+					myMeshFilter.mesh.colors = ColorVerticesbyPhase(myMeshFilter.mesh.vertices,isovalue,my_wphase);
+					//myMeshFilter.mesh.colors = ColorVertices(myMeshFilter.mesh.vertices,isovalue,myMeshFilter.mesh.bounds.center);
 					break;
 
 				default:
@@ -599,7 +610,37 @@ public class guiscript : MonoBehaviour
 		newMesh.triangles = mesh.triangles;// assign triangles last!
 		return newMesh;
 	}
-	
+
+	// color the vertices by HSL color according to ligthness value and wave function phases
+	Color[] ColorVerticesbyPhase(Vector3[] vertices, float value,float[]mywphase)
+	{
+		Color[] mcolors = new Color[vertices.Length];
+		int ii = 0;
+		//float[] arguments = new float[vertices.Length];
+		float argument = 0f;
+		float saturation = 1.0f;
+		float lightness = value;
+		float hue = 0f;
+		Debug.Log (vertices.Length);
+		while (ii < vertices.Length) {
+			argument = mywphase[ii]*180/Mathf.PI;
+			if (argument >= 360) hue = argument-360f;
+			else hue= argument;
+			Vector3 mRGB = HslToRgb(hue, saturation, lightness);
+			//Debug.Log(hue);
+			//Debug.Log(saturation);
+			//Debug.Log(lightness);
+			//Debug.Log (mRGB);
+			mcolors [ii].a =1f;
+			mcolors [ii].r =mRGB.x;
+			mcolors [ii].g =mRGB.y;
+			mcolors [ii].b =mRGB.z;
+			//mcolors[ii].a = Color.blue.a;
+			ii++;
+		}
+		return mcolors;
+	}
+
 	// color the vertices by HSL color according to ligthness value and center point 
 	Color[] ColorVertices(Vector3[] vertices, float value,Vector3 center)
 	{
