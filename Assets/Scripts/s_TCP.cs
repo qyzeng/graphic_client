@@ -6,7 +6,11 @@ using System.Net.Sockets;
 
 public class s_TCP : MonoBehaviour
 { 
-	
+	public delegate void MessageReceivedHandler (string message);
+
+	public event MessageReceivedHandler MessageReceived;
+
+
 	internal Boolean socketReady = false;
 
 	TcpListener mListener;
@@ -32,8 +36,15 @@ public class s_TCP : MonoBehaviour
 
 			}
 		}
+
+		string message = readSocket ();
+		if (!string.IsNullOrEmpty (message)) {
+			if (MessageReceived != null) {
+				MessageReceived (message);
+			}
+		}
 	}
-	
+
 	// ** 
 	public void setupSocket ()
 	{
