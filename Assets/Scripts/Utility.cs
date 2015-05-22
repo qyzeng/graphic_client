@@ -30,4 +30,17 @@ public static class Utility
 		int[] arraySizes = new int[dim];
 
 	}
+
+	public static Vector3 ParseFromString (string strToParse, string seperaator = "|")
+	{
+		Vector3 returnVec = new Vector3 ();
+		string[] datastr = strToParse.Split (seperaator.ToCharArray ());
+		if (datastr.Length > 3) {
+			returnVec.x = float.TryParse (datastr [0], out returnVec.x) ? returnVec.x : default(float);
+			returnVec.y = float.TryParse (datastr [1], out returnVec.y) ? returnVec.y : default(float);
+			returnVec.z = float.TryParse (datastr [2], out returnVec.z) ? returnVec.z : default(float);
+		}
+
+		return returnVec;
+	}
 }

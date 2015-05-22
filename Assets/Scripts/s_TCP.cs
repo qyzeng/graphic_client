@@ -33,7 +33,17 @@ public class s_TCP : MonoBehaviour
 		if (mListener != null) {
 			if (mListener.Pending ()) {
 				Socket socket = mListener.AcceptSocket ();
+				mSocketList.Add (socket);
+			}
 
+			Socket[] currentSocketList = mSocketList.ToArray ();
+
+			foreach (Socket socket in currentSocketList) {
+				if (!socket.Connected) {
+					socket.Disconnect (true);
+					socket.Close ();
+					mSocketList.Remove (socket);
+				}
 			}
 		}
 
