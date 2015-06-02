@@ -43,4 +43,15 @@ public static class Utility
 
 		return returnVec;
 	}
+
+	public static float[,] SwapXY (this float[,] sourceArr)
+	{
+		float[,] targetArr = new float[sourceArr.GetUpperBound (1) + 1, sourceArr.GetUpperBound (0) + 1];
+		for (int targetY = 0; targetY<=targetArr.GetUpperBound(1); ++targetY) {
+			for (int targetX=0; targetX<=targetArr.GetUpperBound(0); ++targetX) {
+				targetArr [targetX, targetY] = sourceArr [targetY, targetX];
+			}
+		}
+		return targetArr;
+	}
 }

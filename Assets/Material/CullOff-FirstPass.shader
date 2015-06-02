@@ -29,6 +29,7 @@
 			"SplatCount" = "4"
 			"Queue" = "Geometry-100"
 			"RenderType" = "Opaque"
+			"IgnoreProjector" = "True"
 		}
 		Cull Off
 

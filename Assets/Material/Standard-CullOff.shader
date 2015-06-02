@@ -11,6 +11,7 @@
 		Tags {
 			"RenderType" = "Opaque"
 			"Queue" = "Geometry-100"
+			"IgnoreProjector" = "True"
 		}
 		LOD 200
 		Cull Off

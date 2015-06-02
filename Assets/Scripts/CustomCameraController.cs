@@ -10,6 +10,19 @@ public class CustomCameraController : MonoBehaviour
 	
 	float rotationX = 0.0F;
 	float rotationY = 0.0F;
+
+	private void Start ()
+	{
+		Init ();
+	}
+
+	public void Init ()
+	{
+		Vector3 initialRotEuler = gameObject.transform.rotation.eulerAngles;
+		rotationX = initialRotEuler.y;
+		rotationY = -initialRotEuler.x;
+	}
+
 	void Update ()
 	{
 		/*
@@ -31,8 +44,8 @@ public class CustomCameraController : MonoBehaviour
 			transform.localRotation = Quaternion.AngleAxis (rotationX, Vector3.up);
 			transform.localRotation *= Quaternion.AngleAxis (rotationY, Vector3.left);
 		}
-		transform.position += transform.forward * moveSpeed * Input.GetAxis ("Vertical") * Time.deltaTime;
-		transform.position += transform.right * moveSpeed * Input.GetAxis ("Horizontal") * Time.deltaTime;
+		//transform.position += transform.forward * moveSpeed * Input.GetAxis ("Vertical") * Time.deltaTime;
+		//transform.position += transform.right * moveSpeed * Input.GetAxis ("Horizontal") * Time.deltaTime;
 		
 	}
 }
