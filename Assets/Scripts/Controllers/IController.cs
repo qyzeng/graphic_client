@@ -23,6 +23,7 @@ namespace WP.Controller
 		PLAYER_ACTION = 8,
 		CAMERA_CHANGE = 9,
 		PLAYER_JUMP = 10,
+		CAMERA_ROTATION = 11,
 	}
     
 	public class CommandFiredEventArgs

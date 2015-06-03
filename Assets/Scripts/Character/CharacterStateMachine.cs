@@ -11,7 +11,8 @@ public enum CharacterState
 	DEAD,
 	INTERACT,
 	JUMP,
-	STUN
+	STUN,
+	FLY,
 }
 
 public enum WeaponType
@@ -118,6 +119,9 @@ public class CharacterStateMachine : MonoBehaviour, IControlListener
 		case CharacterState.MOVE:
 			CancelInvoke ("PlayMoveSound");
 			break;
+		case CharacterState.FLY:
+			_motor.GravityAffect = true;
+			break;
 		}
 
 		switch (newState) {
@@ -196,6 +200,27 @@ public class CharacterStateMachine : MonoBehaviour, IControlListener
 		}
 	}
 
+	private void Fly ()
+	{
+		_motor.GravityAffect = false;
+	}
+
+	private void Flying ()
+	{
+		_motor.ResetMoveVector ();
+
+		if (_motionVector.x > 0) {
+			_motor.MoveRight (_motionVector.x);
+		} else {
+			_motor.MoveLeft (-_motionVector.x);
+		}
+		if (_motionVector.y > 0) {
+			_motor.MoveForward (_motionVector.y);
+		} else {
+			_motor.MoveBack (-_motionVector.y);
+		}
+	}
+
 	private void Move ()
 	{
 		if (ModelObject != null) {
@@ -219,10 +244,12 @@ public class CharacterStateMachine : MonoBehaviour, IControlListener
 	private void Moving ()
 	{
 		_motor.ResetMoveVector ();
-		if (_motionVector.x > 0) {
-			_motor.MoveRight (_motionVector.x);
-		} else {
-			_motor.MoveLeft (-_motionVector.x);
+		if (_motionVector.y > 0) {
+			if (_motionVector.x > 0) {
+				_motor.MoveRight (_motionVector.x);
+			} else {
+				_motor.MoveLeft (-_motionVector.x);
+			}
 		}
 		if (_motionVector.y > 0) {
 			_motor.MoveForward (_motionVector.y);

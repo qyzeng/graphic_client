@@ -3,8 +3,8 @@ using System.Collections;
 
 public class CharacterAnimationController : BaseObjectAnimator
 {
-	private const string ANIMATOR_FORWARD = "ForwardSpeed";
-	private const string ANIMATOR_SIDE = "SideSpeed";
+	private const string ANIMATOR_FORWARD = "Speed";
+	private const string ANIMATOR_SIDE = "Direction";
 	private const string ANIMATOR_GESTURE = "Gesture";
     
 	private float _forwardSpeed = 0;
@@ -42,18 +42,18 @@ public class CharacterAnimationController : BaseObjectAnimator
 		if (charStats != null) {
 			charStats.RegisterStatChangeListener ("MovementSpeed", OnSpeedStatsChanged);
 			_movementSpeed = charStats.GetStatValue<float> ("MovementSpeed");
-			charStats.RegisterStatChangeListener ("WeaponType", OnWeaponTypeChanged);
-			int weapon = charStats.GetStatValue<int> ("WeaponType");
-			SetInt ("WeaponType", weapon);
+//			charStats.RegisterStatChangeListener ("WeaponType", OnWeaponTypeChanged);
+//			int weapon = charStats.GetStatValue<int> ("WeaponType");
+//			SetInt ("WeaponType", weapon);
 		}   
 	}
 
 	protected override void Update ()
 	{
 		base.Update ();
-		if (GetBool ("Action") && CurrentStateHasTag ("Action") && IsCurrentAnimationEnd ()) {
-			SetBool ("Action", false);
-		}
+//		if (GetBool ("Action") && CurrentStateHasTag ("Action") && IsCurrentAnimationEnd ()) {
+//			SetBool ("Action", false);
+//		}
 	}
     
 	private void UpdateForwardSpeed ()
@@ -92,7 +92,7 @@ public class CharacterAnimationController : BaseObjectAnimator
 
 	public void Action ()
 	{
-		SetBool ("Action", true);
+		//SetBool ("Action", true);
 	}
 
 	public bool IsInAction ()

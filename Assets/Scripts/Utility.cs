@@ -54,4 +54,55 @@ public static class Utility
 		}
 		return targetArr;
 	}
+
+	/// <summary>
+	/// Gets the center node. Please do not call this every frame. Call and store it.
+	/// </summary>
+	/// <returns>The center node.</returns>
+	/// <param name="target">Target.</param>
+	public static Transform GetCenterNode (this Transform target)
+	{
+		Transform centerNodeObject = target.FindChild ("CenterNode");
+		if (centerNodeObject == null) {
+			centerNodeObject = new GameObject ("CenterNode").transform;
+			
+			centerNodeObject.parent = target;
+		}
+		centerNodeObject.position = target.GetRenderCenter ();
+		centerNodeObject.localRotation = Quaternion.identity;
+		centerNodeObject.localScale = Vector3.one;
+		return centerNodeObject;
+	}
+	
+	public static Transform GetEstimatedHeadNode (this GameObject target)
+	{
+		Transform headNode = target.transform.Find ("EstimatedHeadNode");
+		if (headNode == null) {
+			Transform center = target.transform.GetCenterNode ();
+			Bounds calcBounds = new Bounds (center.position, Vector3.zero);
+			Renderer[] renders = target.GetComponentsInChildren<Renderer> ();
+			foreach (Renderer render in renders) {
+				calcBounds.Encapsulate (render.bounds);
+			}
+			headNode = new GameObject ("EstimatedHeadNode").transform;
+			headNode.transform.position = center.position + 0.5f * calcBounds.extents.y * Vector3.up;
+			headNode.transform.parent = target.transform;
+		}
+		return headNode;
+	}
+	
+	/// <summary>
+	/// Gets the render center. Not to be called every frame.
+	/// </summary>
+	/// <returns>The render center.</returns>
+	/// <param name="target">Target.</param>
+	private static Vector3 GetRenderCenter (this Transform target)
+	{
+		Bounds objBounds = new Bounds (target.position, target.localScale);
+		Renderer[] objRenderers = target.GetComponentsInChildren<Renderer> ();
+		foreach (Renderer objRender in objRenderers) {
+			objBounds.Encapsulate (objRender.bounds);
+		}
+		return objBounds.center;
+	}
 }

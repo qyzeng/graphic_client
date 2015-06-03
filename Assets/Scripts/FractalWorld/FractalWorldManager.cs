@@ -13,6 +13,7 @@ public class FractalWorldManager : MonoBehaviour
 	MandelbrotFractal mMandelbrotfractal = new MandelbrotFractal ();
 
 	public CharacterStateMachine Player;
+	public CameraControl CamControl;
 
 	public CustomCameraController CameraControl;
 
@@ -69,9 +70,15 @@ public class FractalWorldManager : MonoBehaviour
 		if (Player != null) {
 			Player.AddController (WP.Controller.StandalonePlayerController.Singleton);
 		}
+		if (CamControl != null) {
+			CamControl.AddController (WP.Controller.StandalonePlayerController.Singleton);
+			if (Player)
+				CamControl.LookAtTarget = Player.gameObject;
+		}
+		//Cursor.lockState = CursorLockMode.Locked;
 		InitFractal ();
 		InitTerrain ();
-		InitCamera ();
+		//InitCamera ();
 	}
 
 	private void InitCamera ()

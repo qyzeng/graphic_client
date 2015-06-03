@@ -29,6 +29,8 @@ public class CharacterMotor : MonoBehaviour
 
 	private Rigidbody mRigidbody = null;
 	private Collider mCollider = null;
+
+	public bool GravityAffect = true;
     
 	private void OnMovementSpeedChanged (object sender, WP.Stat.StatValueEventArgs e)
 	{
@@ -128,12 +130,13 @@ public class CharacterMotor : MonoBehaviour
 
 	private void FixedUpdate ()
 	{
-		if (_isOnGround) {
+		if (_isOnGround || !GravityAffect) {
 			Vector3 targetVelocity = (_moveVector * _movementSpeed);
 			mRigidbody.AddForce (CalculateVelocityChange (targetVelocity), ForceMode.VelocityChange);
 		}
 
-		mRigidbody.AddForce (0, -GRAVITY * mRigidbody.mass, 0, ForceMode.Force);
+		if (GravityAffect)
+			mRigidbody.AddForce (0, -GRAVITY * mRigidbody.mass, 0, ForceMode.Force);
 		//_isOnGround = false;
 	}
 
