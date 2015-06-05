@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using WP.Controller;
 
 public enum CharacterState
@@ -35,11 +36,15 @@ public class CharacterStateMachine : MonoBehaviour, IControlListener
 	private CharacterMotor _motor;
 
 	private CharacterAnimationController _animationControl;
+
+	private delegate void StateProcessHandler ();
+	private StateProcessHandler _CurrentStateProcess;
     
 	private Vector2 _motionVector = new Vector2 (0, 0);
 	private bool _actionTriggered = false;
 	private bool _actionDisabled = false;
 	private float _actionCooldown = 0.4f;
+	private bool _jumpTriggered = false;
     
 	private Quaternion _targetRotation = Quaternion.identity;
     
@@ -141,6 +146,12 @@ public class CharacterStateMachine : MonoBehaviour, IControlListener
 		case CharacterState.STUN:
 			Stun ();
 			break;
+		case CharacterState.FLY:
+			Fly ();
+			break;
+		case CharacterState.JUMP:
+			Jump ();
+			break;
 		default:
 			Idle ();
 			break;
@@ -183,26 +194,52 @@ public class CharacterStateMachine : MonoBehaviour, IControlListener
 		if (_actionTriggered) {
 			SetState (CharacterState.ACTION);
 		}
+		if (_jumpTriggered) {
+			_jumpTriggered = false;
+			SetState (CharacterState.JUMP);
+		}
 	}
     
 	private void ProcessCurrentState ()
 	{
-		switch (CurrentState) {
-		case CharacterState.MOVE:
-			Moving ();
-			break;
-		case CharacterState.IDLE:
-			Idling ();
-			break;
-		case CharacterState.ACTION:
-			InAction ();
-			break;
+//		switch (CurrentState) {
+//		case CharacterState.MOVE:
+//			Moving ();
+//			break;
+//		case CharacterState.IDLE:
+//			Idling ();
+//			break;
+//		case CharacterState.ACTION:
+//			InAction ();
+//			break;
+//		case CharacterState.FLY:
+//			Flying ();
+//			break;
+//		}
+		if (_CurrentStateProcess != null) {
+			_CurrentStateProcess ();
+		}
+	}
+
+	private void Jump ()
+	{
+		_animationControl.Jump ();
+		_motor.Jump ();
+		_CurrentStateProcess = Jumping;
+	}
+
+	private void Jumping ()
+	{
+		if (_motor.IsOnGround && _animationControl.IsJumping ()) {
+			_animationControl.Land ();
+			SetState (CharacterState.IDLE);
 		}
 	}
 
 	private void Fly ()
 	{
 		_motor.GravityAffect = false;
+		_CurrentStateProcess = Flying;
 	}
 
 	private void Flying ()
@@ -229,6 +266,7 @@ public class CharacterStateMachine : MonoBehaviour, IControlListener
 				InvokeRepeating ("PlayMoveSound", 0f, audioData.MovingClip.length);
 			}
 		}
+		_CurrentStateProcess = Moving;
 	}
 
 	private void PlayMoveSound ()
@@ -276,6 +314,7 @@ public class CharacterStateMachine : MonoBehaviour, IControlListener
 		_animationControl.ForwardSpeed = 0;
 		_animationControl.SideSpeed = 0;
 		_motor.ResetMoveVector ();  
+		_CurrentStateProcess = Idling;
 	}
 
 	private void PlayIdleSound ()
@@ -394,6 +433,7 @@ public class CharacterStateMachine : MonoBehaviour, IControlListener
 				}
 				break;
 			case COMMAND_TYPE.PLAYER_JUMP:
+				_jumpTriggered = true;
 				break;
 			}
 		}

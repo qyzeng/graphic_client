@@ -26,6 +26,11 @@ public class CharacterMotor : MonoBehaviour
 	private float _movementSpeed = 1.0f;
 	private Vector3 _moveVector = Vector3.zero;
 	private bool _isOnGround = false;
+	public bool IsOnGround {
+		get {
+			return _isOnGround;
+		}
+	}
 
 	private Rigidbody mRigidbody = null;
 	private Collider mCollider = null;

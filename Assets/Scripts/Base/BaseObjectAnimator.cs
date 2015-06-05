@@ -165,6 +165,14 @@ public class BaseObjectAnimator : MonoBehaviour
 	{
 		return _animator.GetCurrentAnimatorStateInfo (layerIndex).normalizedTime % 1 >= 0.9f;
 	}
+
+	public bool IsStateInTransition (int layer=0)
+	{
+		if (_animator != null) {
+			return _animator.IsInTransition (layer);
+		}
+		return false;
+	}
     
 	protected virtual void Update ()
 	{

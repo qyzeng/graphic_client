@@ -91,6 +91,9 @@ namespace WP.Controller
 				_commandList.Add (CommandFiredEventArgs.GenerateArgs ((ushort)COMMAND_TYPE.CAMERA_VERTICAL, camvertical));
 			}
 
+			if (Input.GetKeyDown (KeyCode.Space)) {
+				_commandList.Add (CommandFiredEventArgs.GenerateArgs ((ushort)COMMAND_TYPE.PLAYER_JUMP));
+			}
 
 			float horizontal = Input.GetAxis ("Horizontal");
 			float vertical = Input.GetAxis ("Vertical");

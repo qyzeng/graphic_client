@@ -55,6 +55,11 @@ public class CharacterAnimationController : BaseObjectAnimator
 //			SetBool ("Action", false);
 //		}
 	}
+
+	private void ProcessJumping ()
+	{
+
+	}
     
 	private void UpdateForwardSpeed ()
 	{
@@ -80,13 +85,20 @@ public class CharacterAnimationController : BaseObjectAnimator
     
 	public void Jump ()
 	{
-		SetTrigger ("Jump");
+		//SetTrigger ("Jump");
+		SetBool ("Jump", true);
+	}
+
+	public bool IsJumping ()
+	{
+		return !IsStateInTransition () && IsInState ("Jump");
 	}
     
 	public void Land ()
 	{
 		if (IsInState ("Jump")) {
-			SetTrigger ("Landing");
+			//SetTrigger ("Landing");
+			SetBool ("Jump", false);
 		}
 	}
 
