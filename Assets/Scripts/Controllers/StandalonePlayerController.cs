@@ -17,9 +17,12 @@ namespace WP.Controller
 		public static StandalonePlayerController Singleton {
 			get {
 				if (_instance == null) {
-					GameObject instObj = new GameObject ("StandalonePlayerController");
-					GameObject.DontDestroyOnLoad (instObj);
-					_instance = instObj.AddComponent<StandalonePlayerController> ();
+					_instance = GameObject.FindObjectOfType<StandalonePlayerController> ();
+					if (_instance == null) {
+						GameObject instObj = new GameObject ("StandalonePlayerController");
+						GameObject.DontDestroyOnLoad (instObj);
+						_instance = instObj.AddComponent<StandalonePlayerController> ();
+					}
 				}
 				return _instance;
 			}
@@ -69,9 +72,6 @@ namespace WP.Controller
 					_commandList.Add (CommandFiredEventArgs.GenerateArgs ((ushort)COMMAND_TYPE.PLAYER_ACTION));
 					//_actionTriggered = true;
 					//_actionCooldownTimer.Start();
-				}
-				if (Input.GetKeyUp (KeyCode.Space)) {
-					_commandList.Add (CommandFiredEventArgs.GenerateArgs ((ushort)COMMAND_TYPE.PLAYER_JUMP));
 				}
 			}
 

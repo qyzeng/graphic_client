@@ -14,8 +14,24 @@ public class FractalWorldManager : MonoBehaviour
 
 	public CharacterStateMachine Player;
 	public CameraControl CamControl;
+	public CameraControl OculusCamControl;
+	private CameraControl _currentCamControl;
 
-	public CustomCameraController CameraControl;
+	public bool UseOculus {
+		get {
+			return _UseOculus;
+		}
+		set {
+			if (_UseOculus != value) {
+				_UseOculus = value;
+			}
+		}
+	}
+	[SerializeField]
+	private bool
+		_UseOculus = false;
+
+	public CustomCameraController OldCameraControl;
 
 	public Color TestColor;
 
@@ -54,6 +70,31 @@ public class FractalWorldManager : MonoBehaviour
 
 	private void VerifyExploreMode ()
 	{
+		switch (mExploreMode) {
+		case FRACTAL_EXPLORE_MODE.FLY:
+			if (Player) {
+				Player.SetState (CharacterState.FLY);
+			}
+			if (CamControl) {
+				CamControl.CamType = CameraControl.CameraType.FPS_CAM;
+			}
+			break;
+		case FRACTAL_EXPLORE_MODE.WALK:
+			if (Player) {
+				Player.SetState (CharacterState.IDLE);
+			}
+			if (CamControl) {
+				CamControl.CamType = CameraControl.CameraType.FPS_CAM;
+			}
+			break;
+		}
+	}
+
+	private void VerifyUseOculus ()
+	{
+		if (_UseOculus) {
+
+		}
 	}
 
 	void Awake ()
@@ -63,6 +104,13 @@ public class FractalWorldManager : MonoBehaviour
 		}
 		BoxCollider boundCollider = mBoundaryObject.GetComponent<BoxCollider> ();
 	}
+
+#if UNITY_EDITOR
+	void OnValidate ()
+	{
+		VerifyExploreMode ();
+	}
+#endif
 
 	// Use this for initialization
 	void Start ()
@@ -78,15 +126,16 @@ public class FractalWorldManager : MonoBehaviour
 		//Cursor.lockState = CursorLockMode.Locked;
 		InitFractal ();
 		InitTerrain ();
+		VerifyExploreMode ();
 		//InitCamera ();
 	}
 
 	private void InitCamera ()
 	{
-		if (CameraControl != null) {
-			CameraControl.transform.position = 150f * Vector3.up;
-			CameraControl.transform.rotation = Quaternion.Euler (90f, 0f, 0f);
-			CameraControl.Init ();
+		if (OldCameraControl != null) {
+			OldCameraControl.transform.position = 150f * Vector3.up;
+			OldCameraControl.transform.rotation = Quaternion.Euler (90f, 0f, 0f);
+			OldCameraControl.Init ();
 		}
 	}
 

@@ -10,6 +10,7 @@ public class CameraControl : MonoBehaviour, IControlListener
 		CHASE_CAM,
 		ORBITAL_CAM,
 		OVERHEAD_CAM,
+		FPS_CAM,
 	}
     
 	public delegate void CameraTypeChangedHandler (CameraType newCamType);
@@ -19,6 +20,7 @@ public class CameraControl : MonoBehaviour, IControlListener
     
 	private ChaseCamera _chaseCamera = null;
 	private OrbitalCamera _orbitalCamera = null;
+	private FirstPersonCamera _FPSCamera = null;
 	[SerializeField]
 	private CameraType
 		_camType = CameraType.CHASE_CAM;
@@ -76,6 +78,15 @@ public class CameraControl : MonoBehaviour, IControlListener
 				_orbitalCamera = gameObject.GetComponent<OrbitalCamera> () == null ? gameObject.AddComponent<OrbitalCamera> () : gameObject.GetComponent<OrbitalCamera> ();
 			}
 			return _orbitalCamera;
+		}
+	}
+
+	public FirstPersonCamera FPSCam {
+		get {
+			if (_FPSCamera == null) {
+				_FPSCamera = gameObject.GetComponent<FirstPersonCamera> () == null ? gameObject.AddComponent<FirstPersonCamera> () : gameObject.GetComponent<FirstPersonCamera> ();
+			}
+			return _FPSCamera;
 		}
 	}
     
@@ -209,6 +220,8 @@ public class CameraControl : MonoBehaviour, IControlListener
 	{
 		ChaseCam.enabled = false;
 		OrbitalCam.enabled = false;
+		FPSCam.enabled = false;
+
 	}
     
 	private void DisableCurrentCamera ()
@@ -231,7 +244,7 @@ public class CameraControl : MonoBehaviour, IControlListener
 			if (CamType == CameraType.CHASE_CAM) {
 				_currentCamera.TargetNode = target.transform.FindChild ("TPCameraNode");
 			}
-			if (CamType == CameraType.ORBITAL_CAM) {
+			if (CamType == CameraType.ORBITAL_CAM || CamType == CameraType.FPS_CAM) {
 				_currentCamera.TargetNode = target.GetEstimatedHeadNode ();// GetEstimatedHeadNode(target);//target.transform.GetCenterNode();
 			}
 			if (CamType == CameraType.OVERHEAD_CAM) {
@@ -288,6 +301,9 @@ public class CameraControl : MonoBehaviour, IControlListener
 			break;
 		case CameraType.OVERHEAD_CAM:
 			_currentCamera = OrbitalCam;
+			break;
+		case CameraType.FPS_CAM:
+			_currentCamera = FPSCam;
 			break;
 		}
 
