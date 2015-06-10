@@ -12,11 +12,27 @@ public class FractalWorldManager : MonoBehaviour
 
 	MandelbrotFractal mMandelbrotfractal = new MandelbrotFractal ();
 
-	public CharacterStateMachine Player;
+	private CharacterStateMachine _playerChar;
+	public CharacterStateMachine PlayerChar {
+		get {
+			return _playerChar;
+		}
+	}
+
+	public delegate void PlayerCharacterReadyHandler ();
+	public event PlayerCharacterReadyHandler OnPlayerReady;
+
+	public GameObject ReferenceModel;
+	public GameObject ReferencePlayerObject;
+
 	public CameraControl CamControl;
 	public CameraControl OculusCamControl;
-	private CameraControl _referenceCamControlToUse;
+	[SerializeField]
+	private CameraControl
+		_referenceCamControlToUse;
 	private CameraControl _currentCamControl;
+
+	public Vector3 PlayerSpawnPoint;
 
 	public bool UseOculus {
 		get {
@@ -74,16 +90,16 @@ public class FractalWorldManager : MonoBehaviour
 	{
 		switch (mExploreMode) {
 		case FRACTAL_EXPLORE_MODE.FLY:
-			if (Player) {
-				Player.SetState (CharacterState.FLY);
+			if (_playerChar) {
+				_playerChar.SetState (CharacterState.FLY);
 			}
 			if (_currentCamControl) {
 				_currentCamControl.CamType = CameraControl.CameraType.FPS_CAM;
 			}
 			break;
 		case FRACTAL_EXPLORE_MODE.WALK:
-			if (Player) {
-				Player.SetState (CharacterState.IDLE);
+			if (_playerChar) {
+				_playerChar.SetState (CharacterState.IDLE);
 			}
 			if (_currentCamControl) {
 				_currentCamControl.CamType = CameraControl.CameraType.FPS_CAM;
@@ -107,17 +123,14 @@ public class FractalWorldManager : MonoBehaviour
 			mBoundaryObject = new GameObject ("Game Boundary");
 		}
 		BoxCollider boundCollider = mBoundaryObject.GetComponent<BoxCollider> ();
-		VerifyUseOculus ();
-		if (_referenceCamControlToUse != null) {
-			_currentCamControl = ((GameObject)GameObject.Instantiate (_referenceCamControlToUse.gameObject)).GetComponent<CameraControl> ();
-		}
+
 		//VerifyExploreMode ();
 	}
 
 #if UNITY_EDITOR
 	void OnValidate ()
 	{
-		VerifyExploreMode ();
+		//VerifyExploreMode ();
 		VerifyUseOculus ();
 	}
 #endif
@@ -125,19 +138,57 @@ public class FractalWorldManager : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
-		if (Player != null) {
-			Player.AddController (WP.Controller.StandalonePlayerController.Singleton);
-		}
-		if (_currentCamControl != null) {
-			_currentCamControl.AddController (WP.Controller.StandalonePlayerController.Singleton);
-			if (Player)
-				_currentCamControl.LookAtTarget = Player.gameObject;
-		}
 		//Cursor.lockState = CursorLockMode.Locked;
 		InitFractal ();
 		InitTerrain ();
-		VerifyExploreMode ();
 		//InitCamera ();
+	}
+
+	public void Init ()
+	{
+		if (ReferencePlayerObject != null) {
+			_playerChar = ((GameObject)Network.Instantiate (ReferencePlayerObject, PlayerSpawnPoint, Quaternion.identity, 0)).GetComponent<CharacterStateMachine> ();
+			InitCharacter (_playerChar);
+		}
+		VerifyUseOculus ();
+		if (_referenceCamControlToUse != null) {
+			_currentCamControl = ((GameObject)GameObject.Instantiate (_referenceCamControlToUse.gameObject)).GetComponent<CameraControl> ();
+		}
+	}
+
+	public void InitCharacter (CharacterStateMachine character)
+	{
+		if (ReferenceModel != null) {
+			character.ModelObject = (GameObject)GameObject.Instantiate (ReferenceModel);
+			character.ModelObject.transform.parent = _playerChar.transform;
+			character.ModelObject.transform.localPosition = Vector3.zero;
+			character.ModelObject.transform.localRotation = Quaternion.identity;
+		}
+		if (OnPlayerReady != null) {
+			OnPlayerReady ();
+		}
+	}
+
+	public void LateInit ()
+	{
+		if (_playerChar != null) {
+			_playerChar.AddController (WP.Controller.StandalonePlayerController.Singleton);
+		}
+		if (_currentCamControl != null) {
+			_currentCamControl.AddController (WP.Controller.StandalonePlayerController.Singleton);
+			if (_playerChar)
+				_currentCamControl.LookAtTarget = _playerChar.gameObject;
+		}
+		VerifyExploreMode ();
+	}
+
+	public void ResetPlayer ()
+	{
+		if (_playerChar != null) {
+			Network.Destroy (_playerChar.gameObject);
+		}
+		if (_currentCamControl != null)
+			Destroy (_currentCamControl.gameObject);
 	}
 
 	private void InitCamera ()

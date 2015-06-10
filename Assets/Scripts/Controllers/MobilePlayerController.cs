@@ -2,7 +2,7 @@
 using System.Collections;
 
 namespace WP.Controller
-{
+{/*
 	public class MobilePlayerController : MonoBehaviour, IController
 	{
 		private static MobilePlayerController _instance = null;
@@ -184,4 +184,5 @@ namespace WP.Controller
 			//DispatchCommands();
 		}
 	}
+	*/
 }
