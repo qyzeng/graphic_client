@@ -15,6 +15,7 @@ public class FractalWorldManager : MonoBehaviour
 	public CharacterStateMachine Player;
 	public CameraControl CamControl;
 	public CameraControl OculusCamControl;
+	private CameraControl _referenceCamControlToUse;
 	private CameraControl _currentCamControl;
 
 	public bool UseOculus {
@@ -24,6 +25,7 @@ public class FractalWorldManager : MonoBehaviour
 		set {
 			if (_UseOculus != value) {
 				_UseOculus = value;
+				VerifyUseOculus ();
 			}
 		}
 	}
@@ -75,16 +77,16 @@ public class FractalWorldManager : MonoBehaviour
 			if (Player) {
 				Player.SetState (CharacterState.FLY);
 			}
-			if (CamControl) {
-				CamControl.CamType = CameraControl.CameraType.FPS_CAM;
+			if (_currentCamControl) {
+				_currentCamControl.CamType = CameraControl.CameraType.FPS_CAM;
 			}
 			break;
 		case FRACTAL_EXPLORE_MODE.WALK:
 			if (Player) {
 				Player.SetState (CharacterState.IDLE);
 			}
-			if (CamControl) {
-				CamControl.CamType = CameraControl.CameraType.FPS_CAM;
+			if (_currentCamControl) {
+				_currentCamControl.CamType = CameraControl.CameraType.FPS_CAM;
 			}
 			break;
 		}
@@ -93,7 +95,9 @@ public class FractalWorldManager : MonoBehaviour
 	private void VerifyUseOculus ()
 	{
 		if (_UseOculus) {
-
+			_referenceCamControlToUse = OculusCamControl;
+		} else {
+			_referenceCamControlToUse = CamControl;
 		}
 	}
 
@@ -103,12 +107,18 @@ public class FractalWorldManager : MonoBehaviour
 			mBoundaryObject = new GameObject ("Game Boundary");
 		}
 		BoxCollider boundCollider = mBoundaryObject.GetComponent<BoxCollider> ();
+		VerifyUseOculus ();
+		if (_referenceCamControlToUse != null) {
+			_currentCamControl = ((GameObject)GameObject.Instantiate (_referenceCamControlToUse.gameObject)).GetComponent<CameraControl> ();
+		}
+		//VerifyExploreMode ();
 	}
 
 #if UNITY_EDITOR
 	void OnValidate ()
 	{
 		VerifyExploreMode ();
+		VerifyUseOculus ();
 	}
 #endif
 
@@ -118,10 +128,10 @@ public class FractalWorldManager : MonoBehaviour
 		if (Player != null) {
 			Player.AddController (WP.Controller.StandalonePlayerController.Singleton);
 		}
-		if (CamControl != null) {
-			CamControl.AddController (WP.Controller.StandalonePlayerController.Singleton);
+		if (_currentCamControl != null) {
+			_currentCamControl.AddController (WP.Controller.StandalonePlayerController.Singleton);
 			if (Player)
-				CamControl.LookAtTarget = Player.gameObject;
+				_currentCamControl.LookAtTarget = Player.gameObject;
 		}
 		//Cursor.lockState = CursorLockMode.Locked;
 		InitFractal ();
