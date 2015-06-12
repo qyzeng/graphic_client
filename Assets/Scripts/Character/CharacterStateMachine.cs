@@ -474,6 +474,7 @@ public class CharacterStateMachine : MonoBehaviour, IControlListener
 		if (stream.isReading) {
 			transform.position = position;
 			transform.rotation = rotation;
+			_targetRotation = rotation;
 			transform.localScale = scale;
 		}
 

@@ -8,7 +8,7 @@ public class ExampleNetworkUIScript : MonoBehaviour
 	private string _hostString = "127.0.0.1";
 	private bool _isConnected = false;
 
-	public FractalWorldManager WorldManager;
+	public WorldManager WorldManager;
 
 	// Use this for initialization
 	void Start ()

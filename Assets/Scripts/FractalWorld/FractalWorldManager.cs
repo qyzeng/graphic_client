@@ -2,7 +2,7 @@
 using System.Collections;
 using FractalLibrary;
 
-public class FractalWorldManager : MonoBehaviour
+public class FractalWorldManager : WorldManager
 {
 	public enum FRACTAL_EXPLORE_MODE
 	{
@@ -11,43 +11,6 @@ public class FractalWorldManager : MonoBehaviour
 	}
 
 	MandelbrotFractal mMandelbrotfractal = new MandelbrotFractal ();
-
-	private CharacterStateMachine _playerChar;
-	public CharacterStateMachine PlayerChar {
-		get {
-			return _playerChar;
-		}
-	}
-
-	public delegate void PlayerCharacterReadyHandler ();
-	public event PlayerCharacterReadyHandler OnPlayerReady;
-
-	public GameObject ReferenceModel;
-	public GameObject ReferencePlayerObject;
-
-	public CameraControl CamControl;
-	public CameraControl OculusCamControl;
-	[SerializeField]
-	private CameraControl
-		_referenceCamControlToUse;
-	private CameraControl _currentCamControl;
-
-	public Vector3 PlayerSpawnPoint;
-
-	public bool UseOculus {
-		get {
-			return _UseOculus;
-		}
-		set {
-			if (_UseOculus != value) {
-				_UseOculus = value;
-				VerifyUseOculus ();
-			}
-		}
-	}
-	[SerializeField]
-	private bool
-		_UseOculus = false;
 
 	public CustomCameraController OldCameraControl;
 
@@ -108,15 +71,6 @@ public class FractalWorldManager : MonoBehaviour
 		}
 	}
 
-	private void VerifyUseOculus ()
-	{
-		if (_UseOculus) {
-			_referenceCamControlToUse = OculusCamControl;
-		} else {
-			_referenceCamControlToUse = CamControl;
-		}
-	}
-
 	void Awake ()
 	{
 		if (mBoundaryObject == null) {
@@ -127,13 +81,6 @@ public class FractalWorldManager : MonoBehaviour
 		//VerifyExploreMode ();
 	}
 
-#if UNITY_EDITOR
-	void OnValidate ()
-	{
-		//VerifyExploreMode ();
-		VerifyUseOculus ();
-	}
-#endif
 
 	// Use this for initialization
 	void Start ()
@@ -144,51 +91,10 @@ public class FractalWorldManager : MonoBehaviour
 		//InitCamera ();
 	}
 
-	public void Init ()
+	public override void LateInit ()
 	{
-		if (ReferencePlayerObject != null) {
-			_playerChar = ((GameObject)Network.Instantiate (ReferencePlayerObject, PlayerSpawnPoint, Quaternion.identity, 0)).GetComponent<CharacterStateMachine> ();
-			InitCharacter (_playerChar);
-		}
-		VerifyUseOculus ();
-		if (_referenceCamControlToUse != null) {
-			_currentCamControl = ((GameObject)GameObject.Instantiate (_referenceCamControlToUse.gameObject)).GetComponent<CameraControl> ();
-		}
-	}
-
-	public void InitCharacter (CharacterStateMachine character)
-	{
-		if (ReferenceModel != null) {
-			character.ModelObject = (GameObject)GameObject.Instantiate (ReferenceModel);
-			character.ModelObject.transform.parent = _playerChar.transform;
-			character.ModelObject.transform.localPosition = Vector3.zero;
-			character.ModelObject.transform.localRotation = Quaternion.identity;
-		}
-		if (OnPlayerReady != null) {
-			OnPlayerReady ();
-		}
-	}
-
-	public void LateInit ()
-	{
-		if (_playerChar != null) {
-			_playerChar.AddController (WP.Controller.StandalonePlayerController.Singleton);
-		}
-		if (_currentCamControl != null) {
-			_currentCamControl.AddController (WP.Controller.StandalonePlayerController.Singleton);
-			if (_playerChar)
-				_currentCamControl.LookAtTarget = _playerChar.gameObject;
-		}
+		base.LateInit ();
 		VerifyExploreMode ();
-	}
-
-	public void ResetPlayer ()
-	{
-		if (_playerChar != null) {
-			Network.Destroy (_playerChar.gameObject);
-		}
-		if (_currentCamControl != null)
-			Destroy (_currentCamControl.gameObject);
 	}
 
 	private void InitCamera ()
