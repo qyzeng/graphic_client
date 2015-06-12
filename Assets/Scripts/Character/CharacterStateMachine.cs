@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using WP.Controller;
 
 public enum CharacterState
@@ -46,6 +47,8 @@ public class CharacterStateMachine : MonoBehaviour, IControlListener
 	private float _actionCooldown = 0.4f;
 	private bool _jumpTriggered = false;
     
+	private System.Type _transformType = typeof(Transform);
+
 	private Quaternion _targetRotation = Quaternion.identity;
     
 	private bool _motionEnabled {
@@ -458,5 +461,22 @@ public class CharacterStateMachine : MonoBehaviour, IControlListener
 		if (_controllerList.Contains (controller)) {
 			_controllerList.Remove (controller);
 		}
+	}
+
+	private void OnSerializeNetworkView (BitStream stream, NetworkMessageInfo info)
+	{
+		Vector3 position = transform.position;
+		Quaternion rotation = transform.rotation;
+		Vector3 scale = transform.localScale;
+		stream.Serialize (ref position);
+		stream.Serialize (ref rotation);
+		stream.Serialize (ref scale);
+		if (stream.isReading) {
+			transform.position = position;
+			transform.rotation = rotation;
+			transform.localScale = scale;
+		}
+
+		_animationControl.OnSerializeNetworkView (stream, info);
 	}
 }

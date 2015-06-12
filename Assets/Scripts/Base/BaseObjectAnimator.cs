@@ -1,8 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Reflection;
 
 public class BaseObjectAnimator : MonoBehaviour
 {
+	private System.Type _animatorTypeRef = typeof(Animator);
+
 	public delegate void AnimatorStateTransitionHandler (int layer,AnimatorTransitionInfo transition);
 	/// <summary>
 	/// Occurs when animator state transits.
@@ -182,6 +185,38 @@ public class BaseObjectAnimator : MonoBehaviour
 					if (OnAnimatorStateTransit != null) {
 						OnAnimatorStateTransit (i, _animator.GetAnimatorTransitionInfo (i));
 					}
+				}
+			}
+		}
+	}
+
+	public virtual void OnSerializeNetworkView (BitStream stream, NetworkMessageInfo info)
+	{
+		if (_animator != null) {
+			foreach (AnimatorControllerParameter param in _animator.parameters) {
+				AnimatorControllerParameterType paramType = param.type;
+				switch (paramType) {
+				case AnimatorControllerParameterType.Bool:
+					bool boolParam = _animator.GetBool (param.nameHash);
+					stream.Serialize (ref boolParam);
+					if (stream.isReading) {
+						_animator.SetBool (param.nameHash, boolParam);
+					}
+					break;
+				case AnimatorControllerParameterType.Float:
+					float floatParam = _animator.GetFloat (param.nameHash);
+					stream.Serialize (ref floatParam);
+					if (stream.isReading) {
+						_animator.SetFloat (param.nameHash, floatParam);
+					}
+					break;
+				case AnimatorControllerParameterType.Int:
+					int intParam = _animator.GetInteger (param.nameHash);
+					stream.Serialize (ref intParam);
+					if (stream.isReading) {
+						_animator.SetInteger (param.nameHash, intParam);
+					}
+					break;
 				}
 			}
 		}
