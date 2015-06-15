@@ -12,8 +12,6 @@ public class FractalWorldManager : WorldManager
 
 	MandelbrotFractal mMandelbrotfractal = new MandelbrotFractal ();
 
-	public CustomCameraController OldCameraControl;
-
 	public Color TestColor;
 
 	private const float MAX_FRACTAL_SCALE = 5f;
@@ -99,11 +97,6 @@ public class FractalWorldManager : WorldManager
 
 	private void InitCamera ()
 	{
-		if (OldCameraControl != null) {
-			OldCameraControl.transform.position = 150f * Vector3.up;
-			OldCameraControl.transform.rotation = Quaternion.Euler (90f, 0f, 0f);
-			OldCameraControl.Init ();
-		}
 	}
 
 	private void InitTerrain ()
