@@ -35,10 +35,12 @@ public class ExampleNetworkUIScript : MonoBehaviour
 			_hostString = GUILayout.TextField (_hostString);
 			GUILayout.EndHorizontal ();
 		}
-		GUILayout.BeginHorizontal ();
-		GUILayout.Label ("Port");
-		_portNumber = int.TryParse (GUILayout.TextField (_portNumber.ToString ()), out _portNumber) ? _portNumber : 25000;
-		GUILayout.EndHorizontal ();
+		if (!_isConnected) {
+			GUILayout.BeginHorizontal ();
+			GUILayout.Label ("Port");
+			_portNumber = int.TryParse (GUILayout.TextField (_portNumber.ToString ()), out _portNumber) ? _portNumber : 25000;
+			GUILayout.EndHorizontal ();
+		}
 		string connectButton = _isConnected ? "Disconnect" : "Connect";
 		if (GUILayout.Button (connectButton)) {
 			if (_isConnected) {

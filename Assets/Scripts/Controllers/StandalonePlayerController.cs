@@ -36,7 +36,7 @@ namespace WP.Controller
 			set {
 				if (_ControllerMode != value) {
 					_ControllerMode = value;
-					_instance.ResetControllerCommands ();
+					Singleton.ResetControllerCommands ();
 					if (OnControllerModeChanged != null) {
 						OnControllerModeChanged (_ControllerMode);
 					}
@@ -56,23 +56,26 @@ namespace WP.Controller
 
 		private void OnControlModeChanged (CONTROLLER_MODE mode)
 		{
-            
+			Cursor.lockState = mode == CONTROLLER_MODE.ACTION ? CursorLockMode.Locked : CursorLockMode.None;
+			Cursor.visible = (mode == CONTROLLER_MODE.NORMAL);
 		}
 
 		private void ReadRawInput ()
 		{
-
+			if (Input.GetKeyDown (KeyCode.F)) {
+				ControllerMode = (ControllerMode == CONTROLLER_MODE.ACTION) ? CONTROLLER_MODE.NORMAL : CONTROLLER_MODE.ACTION;
+			}
 			if (ControllerMode == CONTROLLER_MODE.ACTION) {
 				float camhorizontal = Input.GetAxis ("Mouse X");
 				float camvertical = Input.GetAxis ("Mouse Y");
 				_commandList.Add (CommandFiredEventArgs.GenerateArgs ((ushort)COMMAND_TYPE.CAMERA_HORIZONTAL, camhorizontal));
 				_commandList.Add (CommandFiredEventArgs.GenerateArgs ((ushort)COMMAND_TYPE.CAMERA_VERTICAL, -camvertical));
 
-				if (Input.GetButtonUp ("Fire1")) {
-					_commandList.Add (CommandFiredEventArgs.GenerateArgs ((ushort)COMMAND_TYPE.PLAYER_ACTION));
-					//_actionTriggered = true;
-					//_actionCooldownTimer.Start();
-				}
+//				if (Input.GetButtonUp ("Fire1")) {
+//					_commandList.Add (CommandFiredEventArgs.GenerateArgs ((ushort)COMMAND_TYPE.PLAYER_ACTION));
+//					//_actionTriggered = true;
+//					//_actionCooldownTimer.Start();
+//				}
 			}
 
 			if (ControllerMode == CONTROLLER_MODE.NORMAL) {
@@ -105,8 +108,10 @@ namespace WP.Controller
 			if (horizontal != 0 || vertical != 0 || ControllerMode == CONTROLLER_MODE.ACTION) {
 //                CommandFiredEventArgs resetCam = CommandFiredEventArgs.GenerateArgs((ushort)COMMAND_TYPE.RESET_CAMERA);
 //                _commandList.Add(resetCam);
-				CommandFiredEventArgs playerRotate = CommandFiredEventArgs.GenerateArgs ((ushort)COMMAND_TYPE.PLAYER_ROTATION, Camera.main.transform.rotation);
-				_commandList.Add (playerRotate);
+				if (Camera.main != null) {
+					CommandFiredEventArgs playerRotate = CommandFiredEventArgs.GenerateArgs ((ushort)COMMAND_TYPE.PLAYER_ROTATION, Camera.main.transform.rotation);
+					_commandList.Add (playerRotate);
+				}
 			}
         
 			float scroll = Input.GetAxis ("Mouse ScrollWheel");
@@ -149,6 +154,7 @@ namespace WP.Controller
 		// Use this for initialization
 		void Start ()
 		{
+			OnControlModeChanged (ControllerMode);
 			OnControllerModeChanged += this.OnControlModeChanged;
 			_actionCooldownTimer.Elapsed += OnActionCooldownEnd;
 		}

@@ -87,6 +87,17 @@ public class CharacterStateMachine : MonoBehaviour, IControlListener
 		if (_animationControl != null) {
 			_animationControl.ModelObject = ModelObject;
 		}
+		if (ModelObject != null) {
+			Bounds testBounds = new Bounds (this.transform.position, Vector3.zero);
+			Renderer[] allRenderers = this.GetComponentsInChildren<Renderer> ();
+			foreach (Renderer individualRenderer in allRenderers) {
+				testBounds.Encapsulate (individualRenderer.bounds);
+			}
+			CapsuleCollider collider = this.GetComponent<CapsuleCollider> ();
+			collider.center = this.transform.InverseTransformPoint (testBounds.center);
+			collider.radius = Mathf.Min (testBounds.extents.x, testBounds.extents.z);
+			collider.height = testBounds.size.y;
+		}
 	}
 
 	void Awake ()
@@ -99,7 +110,8 @@ public class CharacterStateMachine : MonoBehaviour, IControlListener
 	private void Start ()
 	{
 		this.OnStateTransit += ProcessStateTransition;
-		_animationControl.ModelObject = ModelObject;
+		//_animationControl.ModelObject = ModelObject;
+		RefreshModelObjectData ();
 		SetState (CharacterState.IDLE);
 		_targetRotation = transform.rotation;
 
@@ -242,6 +254,8 @@ public class CharacterStateMachine : MonoBehaviour, IControlListener
 	private void Fly ()
 	{
 		_motor.GravityAffect = false;
+		_animationControl.ForwardSpeed = 0;
+		_motor.ResetMoveVector ();
 		_CurrentStateProcess = Flying;
 	}
 

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using FractalLibrary;
+using WP.Controller;
 
 public class FractalWorldManager : WorldManager
 {
@@ -53,9 +54,11 @@ public class FractalWorldManager : WorldManager
 		case FRACTAL_EXPLORE_MODE.FLY:
 			if (_playerChar) {
 				_playerChar.SetState (CharacterState.FLY);
+				_playerChar.transform.position = 110f * Vector3.up;
 			}
 			if (_currentCamControl) {
 				_currentCamControl.CamType = CameraControl.CameraType.FPS_CAM;
+				_currentCamControl.OverrideRotation (Quaternion.Euler (90f * Vector3.right));
 			}
 			break;
 		case FRACTAL_EXPLORE_MODE.WALK:
@@ -63,7 +66,7 @@ public class FractalWorldManager : WorldManager
 				_playerChar.SetState (CharacterState.IDLE);
 			}
 			if (_currentCamControl) {
-				_currentCamControl.CamType = CameraControl.CameraType.FPS_CAM;
+				_currentCamControl.CamType = CameraControl.CameraType.ORBITAL_CAM;
 			}
 			break;
 		}
@@ -78,7 +81,67 @@ public class FractalWorldManager : WorldManager
 
 		//VerifyExploreMode ();
 	}
+		
+	private void OnControlModeChanged (WP.Controller.CONTROLLER_MODE mode)
+	{
+		ExploreMode = mode == WP.Controller.CONTROLLER_MODE.NORMAL ? FRACTAL_EXPLORE_MODE.FLY : FRACTAL_EXPLORE_MODE.WALK;
+	}
 
+	private void ControlCommandReceivedHandler (System.Collections.Generic.List<CommandFiredEventArgs> commandList)
+	{
+		if (ExploreMode == FRACTAL_EXPLORE_MODE.FLY) {
+			foreach (CommandFiredEventArgs command in commandList) {
+				if (command.Command == (int)COMMAND_TYPE.PLAYER_VERTICAL) {
+					MoveFractalBounds (Vector2.up * (float)(command.Arguments [0]));
+				}
+				if (command.Command == (int)COMMAND_TYPE.PLAYER_HORIZONTAL) {
+					MoveFractalBounds (Vector2.right * (float)(command.Arguments [0]));
+				}
+
+				if (command.Command == (int)COMMAND_TYPE.CAMERA_ZOOM) {
+
+				}
+			}
+		}
+//		if (Input.GetKey (KeyCode.UpArrow)) {
+//			MoveFractalBounds (Vector2.up);
+//		}
+//		if (Input.GetKey (KeyCode.DownArrow)) {
+//			MoveFractalBounds (-Vector2.up);
+//		}
+//		if (Input.GetKey (KeyCode.RightArrow)) {
+//			MoveFractalBounds (Vector2.right);
+//		}
+//		if (Input.GetKey (KeyCode.LeftArrow)) {
+//			MoveFractalBounds (-Vector2.right);
+//		}
+		//		float mouseScroll = Input.GetAxisRaw ("Mouse ScrollWheel");
+		//		if (mouseScroll != 0f) {
+		//			mFractalScale += mouseScroll * FractalScaleSpeed * Time.deltaTime;
+		//			Vector2 midPoint = (mFractalMax + mFractalMin) * 0.5f;
+		//			Vector2 extents = (mFractalMax - mFractalMin) * 0.5f * mFractalScale;
+		//			mFractalMin = midPoint - extents;
+		//			mFractalMax = midPoint + extents;
+		//			mFractalBoundsChanged = true;
+		//		}
+		
+		if (Input.GetKey (KeyCode.O)) {
+			mFractalScale = Mathf.Lerp (mFractalScale, MAX_FRACTAL_SCALE, Time.deltaTime);
+			Vector2 midPoint = (mFractalMax + mFractalMin) * 0.5f;
+			Vector2 extents = Vector2.one * 0.5f * mFractalScale;
+			mFractalMin = midPoint - extents;
+			mFractalMax = midPoint + extents;
+			mFractalBoundsChanged = true;
+		}
+		if (Input.GetKey (KeyCode.L)) {
+			mFractalScale = Mathf.Lerp (mFractalScale, MIN_FRACTAL_SCALE, Time.deltaTime);
+			Vector2 midPoint = (mFractalMax + mFractalMin) * 0.5f;
+			Vector2 extents = Vector2.one * 0.5f * mFractalScale;
+			mFractalMin = midPoint - extents;
+			mFractalMax = midPoint + extents;
+			mFractalBoundsChanged = true;
+		}
+	}
 
 	// Use this for initialization
 	void Start ()
@@ -86,17 +149,15 @@ public class FractalWorldManager : WorldManager
 		//Cursor.lockState = CursorLockMode.Locked;
 		InitFractal ();
 		InitTerrain ();
-		//InitCamera ();
+		StandalonePlayerController.ControllerMode = ExploreMode == FRACTAL_EXPLORE_MODE.WALK ? CONTROLLER_MODE.ACTION : CONTROLLER_MODE.NORMAL;
+		StandalonePlayerController.OnControllerModeChanged += this.OnControlModeChanged;
+		OnControlModeChanged (StandalonePlayerController.ControllerMode);
 	}
 
 	public override void LateInit ()
 	{
 		base.LateInit ();
 		VerifyExploreMode ();
-	}
-
-	private void InitCamera ()
-	{
 	}
 
 	private void InitTerrain ()
@@ -136,7 +197,6 @@ public class FractalWorldManager : WorldManager
 	// Update is called once per frame
 	void Update ()
 	{
-		ReadKeyInput ();
 	}
 
 	void FixedUpdate ()
@@ -193,47 +253,7 @@ public class FractalWorldManager : WorldManager
 		yield return new WaitForEndOfFrame ();
 	}
 
-	private void ReadKeyInput ()
-	{
-		if (Input.GetKey (KeyCode.UpArrow)) {
-			MoveFractalBounds (Vector2.up);
-		}
-		if (Input.GetKey (KeyCode.DownArrow)) {
-			MoveFractalBounds (-Vector2.up);
-		}
-		if (Input.GetKey (KeyCode.RightArrow)) {
-			MoveFractalBounds (Vector2.right);
-		}
-		if (Input.GetKey (KeyCode.LeftArrow)) {
-			MoveFractalBounds (-Vector2.right);
-		}
-//		float mouseScroll = Input.GetAxisRaw ("Mouse ScrollWheel");
-//		if (mouseScroll != 0f) {
-//			mFractalScale += mouseScroll * FractalScaleSpeed * Time.deltaTime;
-//			Vector2 midPoint = (mFractalMax + mFractalMin) * 0.5f;
-//			Vector2 extents = (mFractalMax - mFractalMin) * 0.5f * mFractalScale;
-//			mFractalMin = midPoint - extents;
-//			mFractalMax = midPoint + extents;
-//			mFractalBoundsChanged = true;
-//		}
 
-		if (Input.GetKey (KeyCode.O)) {
-			mFractalScale = Mathf.Lerp (mFractalScale, MAX_FRACTAL_SCALE, Time.deltaTime);
-			Vector2 midPoint = (mFractalMax + mFractalMin) * 0.5f;
-			Vector2 extents = Vector2.one * 0.5f * mFractalScale;
-			mFractalMin = midPoint - extents;
-			mFractalMax = midPoint + extents;
-			mFractalBoundsChanged = true;
-		}
-		if (Input.GetKey (KeyCode.L)) {
-			mFractalScale = Mathf.Lerp (mFractalScale, MIN_FRACTAL_SCALE, Time.deltaTime);
-			Vector2 midPoint = (mFractalMax + mFractalMin) * 0.5f;
-			Vector2 extents = Vector2.one * 0.5f * mFractalScale;
-			mFractalMin = midPoint - extents;
-			mFractalMax = midPoint + extents;
-			mFractalBoundsChanged = true;
-		}
-	}
 
 	private void MoveFractalBounds (Vector2 direction)
 	{

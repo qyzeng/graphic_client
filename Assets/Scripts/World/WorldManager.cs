@@ -59,12 +59,12 @@ public class WorldManager : MonoBehaviour
 	
 	public void InitCharacter (CharacterStateMachine character)
 	{
-		if (ReferenceModel != null) {
-			character.ModelObject = (GameObject)GameObject.Instantiate (ReferenceModel);
-			character.ModelObject.transform.parent = _playerChar.transform;
-			character.ModelObject.transform.localPosition = Vector3.zero;
-			character.ModelObject.transform.localRotation = Quaternion.identity;
-		}
+//		if (ReferenceModel != null) {
+//			character.ModelObject = (GameObject)GameObject.Instantiate (ReferenceModel);
+//			character.ModelObject.transform.parent = _playerChar.transform;
+//			character.ModelObject.transform.localPosition = Vector3.zero;
+//			character.ModelObject.transform.localRotation = Quaternion.identity;
+//		}
 		if (OnPlayerReady != null) {
 			OnPlayerReady ();
 		}

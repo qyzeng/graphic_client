@@ -16,8 +16,8 @@ public class OrbitalCamera : BaseCamera
     
 	private float _targetDistance = 0;
     
-	private float _upperBound_Y = 60f;
-	private float _lowerBound_Y = -60f;
+	private float _upperBound_Y = 100f;
+	private float _lowerBound_Y = -100f;
     
 	private Vector2 _currentEulerXY = new Vector2 (0f, 90f);
 	private Vector2 _prevEulerXY = new Vector2 (0f, 0f);

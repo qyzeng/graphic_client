@@ -83,6 +83,13 @@ public class FirstPersonCamera : BaseCamera
 		//_currentEulerXY.y = Mathf.Clamp (_currentEulerXY.y, _lowerBound_Y, _upperBound_Y);
 	}
 
+	public override void SetOverrideRotation (Quaternion rotation)
+	{
+		_currentEulerXY.x = rotation.eulerAngles.y;
+		_currentEulerXY.y = rotation.eulerAngles.x;
+		//base.SetOverrideRotation(rotation);
+	}
+
 	private float CheckEulerAngleRange (float val)
 	{
 		return val > 360f ? val - 360f : val < -360f ? val + 360f : val;
