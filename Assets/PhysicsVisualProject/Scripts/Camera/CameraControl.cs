@@ -233,7 +233,7 @@ public class CameraControl : MonoBehaviour, IControlListener
 		ChaseCam.enabled = false;
 		OrbitalCam.enabled = false;
 		FPSCam.enabled = false;
-
+		OverviewCam.enabled = false;
 	}
     
 	private void DisableCurrentCamera ()
@@ -263,7 +263,7 @@ public class CameraControl : MonoBehaviour, IControlListener
 				_currentCamera.TargetNode = GetOverheadNode (target);
 			}
 			if (CamType == CameraType.OVERVIEW_CAM) {
-				_currentCamera.TargetNode = target.transform;
+				_currentCamera.TargetNode = target.transform.GetCenterNode ();
 			}
 		}
 	}
@@ -335,6 +335,7 @@ public class CameraControl : MonoBehaviour, IControlListener
 	// Use this for initialization
 	void Start ()
 	{
+		DisableAllCameraTypes ();
 		ChangeCameraType (CamType);
 		OnCameraTypeChanged += ChangeCameraType;
 		OnCameraTargetChanged += CameraTargetChanged;

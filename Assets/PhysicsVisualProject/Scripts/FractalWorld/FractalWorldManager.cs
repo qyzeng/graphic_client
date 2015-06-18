@@ -15,6 +15,7 @@ public class FractalWorldManager : WorldManager
 
 	public Color TestColor;
 
+
 	private const float MAX_FRACTAL_SCALE = 5f;
 	private const float MIN_FRACTAL_SCALE = 0f;
 
@@ -54,20 +55,27 @@ public class FractalWorldManager : WorldManager
 		case FRACTAL_EXPLORE_MODE.FLY:
 			if (_playerChar) {
 				_playerChar.SetState (CharacterState.FLY);
-				_playerChar.transform.position = 110f * Vector3.up;
+				_playerChar.RemoveController (StandalonePlayerController.Singleton);
 			}
 			if (_currentCamControl) {
-				_currentCamControl.CamType = CameraControl.CameraType.FPS_CAM;
+				_currentCamControl.CamType = CameraControl.CameraType.OVERVIEW_CAM;
+				_currentCamControl.LookAtTarget = WorldCenter.gameObject;
+				_currentCamControl.transform.position = Vector3.up * 110f;
 				_currentCamControl.OverrideRotation (Quaternion.Euler (90f * Vector3.right));
 			}
+			StandalonePlayerController.ControllerMode = CONTROLLER_MODE.NORMAL;
 			break;
 		case FRACTAL_EXPLORE_MODE.WALK:
 			if (_playerChar) {
 				_playerChar.SetState (CharacterState.IDLE);
+				_playerChar.transform.position = 110f * Vector3.up;
+				_playerChar.AddController (StandalonePlayerController.Singleton);
 			}
 			if (_currentCamControl) {
 				_currentCamControl.CamType = CameraControl.CameraType.ORBITAL_CAM;
+				_currentCamControl.LookAtTarget = _playerChar.gameObject;
 			}
+			StandalonePlayerController.ControllerMode = CONTROLLER_MODE.ACTION;
 			break;
 		}
 	}
@@ -87,6 +95,15 @@ public class FractalWorldManager : WorldManager
 		ExploreMode = mode == WP.Controller.CONTROLLER_MODE.NORMAL ? FRACTAL_EXPLORE_MODE.FLY : FRACTAL_EXPLORE_MODE.WALK;
 	}
 
+	private void SetFractalScaleFactor (float scaleVal)
+	{
+		Vector2 midPoint = (mFractalMax + mFractalMin) * 0.5f;
+		Vector2 extents = Vector2.one * 0.5f * scaleVal;
+		mFractalMax = midPoint + extents;
+		mFractalMin = midPoint - extents;
+		mFractalBoundsChanged = true;
+	}
+
 	private void ControlCommandReceivedHandler (System.Collections.Generic.List<CommandFiredEventArgs> commandList)
 	{
 		if (ExploreMode == FRACTAL_EXPLORE_MODE.FLY) {
@@ -99,7 +116,10 @@ public class FractalWorldManager : WorldManager
 				}
 
 				if (command.Command == (int)COMMAND_TYPE.CAMERA_ZOOM) {
-
+					float deltaZoom = (float)command.Arguments [0];
+					mFractalScale -= deltaZoom * Time.deltaTime;
+					mFractalScale = Mathf.Clamp (mFractalScale, MIN_FRACTAL_SCALE, MAX_FRACTAL_SCALE);
+					SetFractalScaleFactor (mFractalScale);
 				}
 			}
 		}
@@ -125,22 +145,22 @@ public class FractalWorldManager : WorldManager
 		//			mFractalBoundsChanged = true;
 		//		}
 		
-		if (Input.GetKey (KeyCode.O)) {
-			mFractalScale = Mathf.Lerp (mFractalScale, MAX_FRACTAL_SCALE, Time.deltaTime);
-			Vector2 midPoint = (mFractalMax + mFractalMin) * 0.5f;
-			Vector2 extents = Vector2.one * 0.5f * mFractalScale;
-			mFractalMin = midPoint - extents;
-			mFractalMax = midPoint + extents;
-			mFractalBoundsChanged = true;
-		}
-		if (Input.GetKey (KeyCode.L)) {
-			mFractalScale = Mathf.Lerp (mFractalScale, MIN_FRACTAL_SCALE, Time.deltaTime);
-			Vector2 midPoint = (mFractalMax + mFractalMin) * 0.5f;
-			Vector2 extents = Vector2.one * 0.5f * mFractalScale;
-			mFractalMin = midPoint - extents;
-			mFractalMax = midPoint + extents;
-			mFractalBoundsChanged = true;
-		}
+//		if (Input.GetKey (KeyCode.O)) {
+//			mFractalScale = Mathf.Lerp (mFractalScale, MAX_FRACTAL_SCALE, Time.deltaTime);
+//			Vector2 midPoint = (mFractalMax + mFractalMin) * 0.5f;
+//			Vector2 extents = Vector2.one * 0.5f * mFractalScale;
+//			mFractalMin = midPoint - extents;
+//			mFractalMax = midPoint + extents;
+//			mFractalBoundsChanged = true;
+//		}
+//		if (Input.GetKey (KeyCode.L)) {
+//			mFractalScale = Mathf.Lerp (mFractalScale, MIN_FRACTAL_SCALE, Time.deltaTime);
+//			Vector2 midPoint = (mFractalMax + mFractalMin) * 0.5f;
+//			Vector2 extents = Vector2.one * 0.5f * mFractalScale;
+//			mFractalMin = midPoint - extents;
+//			mFractalMax = midPoint + extents;
+//			mFractalBoundsChanged = true;
+//		}
 	}
 
 	// Use this for initialization
@@ -152,6 +172,7 @@ public class FractalWorldManager : WorldManager
 		StandalonePlayerController.ControllerMode = ExploreMode == FRACTAL_EXPLORE_MODE.WALK ? CONTROLLER_MODE.ACTION : CONTROLLER_MODE.NORMAL;
 		StandalonePlayerController.OnControllerModeChanged += this.OnControlModeChanged;
 		OnControlModeChanged (StandalonePlayerController.ControllerMode);
+		StandalonePlayerController.Singleton.OnControllerCommandsFired += ControlCommandReceivedHandler;
 	}
 
 	public override void LateInit ()

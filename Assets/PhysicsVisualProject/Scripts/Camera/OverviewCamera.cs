@@ -26,6 +26,15 @@ public class OverviewCamera : BaseCamera
 		}
 	}
 
+	private void OnDisable ()
+	{
+		Camera[] allCameras = GetComponentsInChildren<Camera> ();
+		foreach (Camera cam in allCameras) {
+			cam.orthographic = false;
+			cam.fieldOfView = FOV;
+		}
+	}
+
 	protected override void OnEnable ()
 	{
 		RefreshCameras ();
@@ -42,5 +51,11 @@ public class OverviewCamera : BaseCamera
 	void Update ()
 	{
 		this.transform.LookAt (TargetNode.position);
+	}
+
+	public override void SetOverrideRotation (Quaternion rotation)
+	{
+		transform.rotation = rotation;
+		//base.SetOverrideRotation (rotation);
 	}
 }

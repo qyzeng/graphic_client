@@ -25,6 +25,21 @@ public class WorldManager : MonoBehaviour
 	protected CameraControl _currentCamControl;
 	
 	public Vector3 PlayerSpawnPoint;
+
+	
+	private Transform _worldCenter = null;
+	public Transform WorldCenter {
+		get {
+			if (_worldCenter == null) {
+				_worldCenter = GameObject.Find ("WorldCenter").transform;
+				if (_worldCenter == null) {
+					_worldCenter = new GameObject ("WorldCenter").transform;
+					_worldCenter.position = Vector3.zero;
+				}
+			}
+			return _worldCenter;
+		}
+	}
 	
 	public bool UseOculus {
 		get {
