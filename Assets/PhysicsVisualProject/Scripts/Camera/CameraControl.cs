@@ -11,6 +11,7 @@ public class CameraControl : MonoBehaviour, IControlListener
 		ORBITAL_CAM,
 		OVERHEAD_CAM,
 		FPS_CAM,
+		OVERVIEW_CAM,
 	}
     
 	public delegate void CameraTypeChangedHandler (CameraType newCamType);
@@ -21,6 +22,8 @@ public class CameraControl : MonoBehaviour, IControlListener
 	private ChaseCamera _chaseCamera = null;
 	private OrbitalCamera _orbitalCamera = null;
 	private FirstPersonCamera _FPSCamera = null;
+	private OverviewCamera _overviewCam = null;
+
 	[SerializeField]
 	private CameraType
 		_camType = CameraType.CHASE_CAM;
@@ -87,6 +90,15 @@ public class CameraControl : MonoBehaviour, IControlListener
 				_FPSCamera = gameObject.GetComponent<FirstPersonCamera> () == null ? gameObject.AddComponent<FirstPersonCamera> () : gameObject.GetComponent<FirstPersonCamera> ();
 			}
 			return _FPSCamera;
+		}
+	}
+
+	public OverviewCamera OverviewCam {
+		get {
+			if (_overviewCam == null) {
+				_overviewCam = gameObject.GetComponent<OverviewCamera> () == null ? gameObject.AddComponent<OverviewCamera> () : gameObject.GetComponent<OverviewCamera> ();
+			}
+			return _overviewCam;
 		}
 	}
     
@@ -250,6 +262,9 @@ public class CameraControl : MonoBehaviour, IControlListener
 			if (CamType == CameraType.OVERHEAD_CAM) {
 				_currentCamera.TargetNode = GetOverheadNode (target);
 			}
+			if (CamType == CameraType.OVERVIEW_CAM) {
+				_currentCamera.TargetNode = target.transform;
+			}
 		}
 	}
     
@@ -304,6 +319,9 @@ public class CameraControl : MonoBehaviour, IControlListener
 			break;
 		case CameraType.FPS_CAM:
 			_currentCamera = FPSCam;
+			break;
+		case CameraType.OVERVIEW_CAM:
+			_currentCamera = OverviewCam;
 			break;
 		}
 
