@@ -10,6 +10,11 @@ public class FractalWorldInit : MonoBehaviour
 	void Start ()
 	{
 		Network.InitializeServer (99, PortNumber, true);
+		Invoke ("Init", 1f);
+	}
+
+	void Init ()
+	{
 		if (World) {
 			World.Init ();
 			World.LateInit ();

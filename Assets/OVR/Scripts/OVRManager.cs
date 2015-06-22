@@ -458,26 +458,13 @@ public class OVRManager : MonoBehaviour
 
 	private void Start ()
 	{
-#if !UNITY_ANDROID || UNITY_EDITOR
-		Camera cam = GetComponent<Camera> ();
-		if (cam == null) {
-			// Ensure there is a non-RT camera in the scene to force rendering of the left and right eyes.
-			cam = gameObject.AddComponent<Camera> ();
-			cam.cullingMask = 0;
-			cam.clearFlags = CameraClearFlags.SolidColor;
-			cam.backgroundColor = new Color (0.0f, 0.0f, 0.0f);
-			cam.renderingPath = RenderingPath.Forward;
-			cam.orthographic = true;
-			cam.useOcclusionCulling = false;
-		}
-#endif
 
 		bool isD3d = SystemInfo.graphicsDeviceVersion.Contains ("Direct3D") ||
 			Application.platform == RuntimePlatform.WindowsEditor &&
 			SystemInfo.graphicsDeviceVersion.Contains ("emulated");
 		display.flipInput = isD3d;
 
-		StartCoroutine (CallbackCoroutine ());
+		//StartCoroutine (CallbackCoroutine ());
 	}
 
 	private void Update ()
@@ -518,29 +505,7 @@ public class OVRManager : MonoBehaviour
 #endif
 	}
 
-#if (UNITY_EDITOR_OSX)
-	private void OnPreCull() // TODO: Fix Mac Unity Editor memory corruption issue requiring OnPreCull workaround.
-#else
-	private void LateUpdate ()
-#endif
-	{
-#if (!UNITY_ANDROID || UNITY_EDITOR)
-		display.BeginFrame ();
-#endif
-	}
 
-	private IEnumerator CallbackCoroutine ()
-	{
-		while (true) {
-			yield return waitForEndOfFrame;
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-			OVRManager.DoTimeWarp(timeWarpViewNumber);
-#else
-			display.EndFrame ();
-#endif
-		}
-	}
 	
 #if UNITY_ANDROID && !UNITY_EDITOR
 	private void OnPause()

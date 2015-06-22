@@ -69,7 +69,22 @@ public class OVRCameraRig : MonoBehaviour
 
 	private void Start ()
 	{
+#if !UNITY_ANDROID || UNITY_EDITOR
+		Camera cam = GetComponent<Camera> ();
+		if (cam == null) {
+			// Ensure there is a non-RT camera in the scene to force rendering of the left and right eyes.
+			cam = gameObject.AddComponent<Camera> ();
+			cam.cullingMask = 0;
+			cam.clearFlags = CameraClearFlags.SolidColor;
+			cam.backgroundColor = new Color (0.0f, 0.0f, 0.0f);
+			cam.renderingPath = RenderingPath.Forward;
+			cam.orthographic = true;
+			cam.useOcclusionCulling = false;
+		}
+#endif
 		EnsureGameObjectIntegrity ();
+
+		StartCoroutine (CallbackCoroutine ());
 
 		if (!Application.isPlaying)
 			return;
@@ -84,6 +99,10 @@ public class OVRCameraRig : MonoBehaviour
 	private void Update()
 #endif
 	{
+		
+#if (!UNITY_ANDROID || UNITY_EDITOR)
+		OVRManager.display.BeginFrame ();
+#endif
 		EnsureGameObjectIntegrity ();
 		
 		if (!Application.isPlaying)
@@ -91,6 +110,7 @@ public class OVRCameraRig : MonoBehaviour
 
 		UpdateCameras ();
 		UpdateAnchors ();
+
 	}
 
 #endregion
@@ -198,5 +218,26 @@ public class OVRCameraRig : MonoBehaviour
 		return cam;
 	}
 
+#if (UNITY_EDITOR_OSX)
+	private void OnPreCull() // TODO: Fix Mac Unity Editor memory corruption issue requiring OnPreCull workaround.
+	{
+#if (!UNITY_ANDROID || UNITY_EDITOR)
+		OVRManager.display.BeginFrame ();
+#endif
+	}
+#endif
+	
+	private IEnumerator CallbackCoroutine ()
+	{
+		while (true) {
+			yield return new WaitForEndOfFrame ();//OVRManager.waitForEndOfFrame;
+			
+#if UNITY_ANDROID && !UNITY_EDITOR
+			OVRManager.DoTimeWarp(timeWarpViewNumber);
+#else
+			OVRManager.display.EndFrame ();
+#endif
+		}
+	}
 
 }

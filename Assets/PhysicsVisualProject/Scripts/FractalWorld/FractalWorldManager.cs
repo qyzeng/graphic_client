@@ -26,6 +26,7 @@ public class FractalWorldManager : WorldManager
 	private bool mFractalBoundsChanged = false;
 	private bool mTerrainHeightsDirty = false;
 	private bool mTerrainTextureDirty = false;
+	public int InitialIterations = 50;
 
 	public float FractalBoundMoveSpeed = 5f;
 
@@ -60,7 +61,7 @@ public class FractalWorldManager : WorldManager
 			if (_currentCamControl) {
 				_currentCamControl.CamType = CameraControl.CameraType.OVERVIEW_CAM;
 				_currentCamControl.LookAtTarget = WorldCenter.gameObject;
-				_currentCamControl.transform.position = Vector3.up * 110f;
+				_currentCamControl.transform.position = PlayerSpawnPoint;
 				_currentCamControl.OverrideRotation (Quaternion.Euler (90f * Vector3.right));
 			}
 			StandalonePlayerController.ControllerMode = CONTROLLER_MODE.NORMAL;
@@ -68,7 +69,7 @@ public class FractalWorldManager : WorldManager
 		case FRACTAL_EXPLORE_MODE.WALK:
 			if (_playerChar) {
 				_playerChar.SetState (CharacterState.IDLE);
-				_playerChar.transform.position = 110f * Vector3.up;
+				_playerChar.transform.position = PlayerSpawnPoint;
 				_playerChar.AddController (StandalonePlayerController.Singleton);
 			}
 			if (_currentCamControl) {
@@ -117,55 +118,18 @@ public class FractalWorldManager : WorldManager
 
 				if (command.Command == (int)COMMAND_TYPE.CAMERA_ZOOM) {
 					float deltaZoom = (float)command.Arguments [0];
-					mFractalScale -= deltaZoom * Time.deltaTime;
+					mFractalScale -= deltaZoom * Time.deltaTime * mFractalScale;
 					mFractalScale = Mathf.Clamp (mFractalScale, MIN_FRACTAL_SCALE, MAX_FRACTAL_SCALE);
 					SetFractalScaleFactor (mFractalScale);
 				}
 			}
 		}
-//		if (Input.GetKey (KeyCode.UpArrow)) {
-//			MoveFractalBounds (Vector2.up);
-//		}
-//		if (Input.GetKey (KeyCode.DownArrow)) {
-//			MoveFractalBounds (-Vector2.up);
-//		}
-//		if (Input.GetKey (KeyCode.RightArrow)) {
-//			MoveFractalBounds (Vector2.right);
-//		}
-//		if (Input.GetKey (KeyCode.LeftArrow)) {
-//			MoveFractalBounds (-Vector2.right);
-//		}
-		//		float mouseScroll = Input.GetAxisRaw ("Mouse ScrollWheel");
-		//		if (mouseScroll != 0f) {
-		//			mFractalScale += mouseScroll * FractalScaleSpeed * Time.deltaTime;
-		//			Vector2 midPoint = (mFractalMax + mFractalMin) * 0.5f;
-		//			Vector2 extents = (mFractalMax - mFractalMin) * 0.5f * mFractalScale;
-		//			mFractalMin = midPoint - extents;
-		//			mFractalMax = midPoint + extents;
-		//			mFractalBoundsChanged = true;
-		//		}
-		
-//		if (Input.GetKey (KeyCode.O)) {
-//			mFractalScale = Mathf.Lerp (mFractalScale, MAX_FRACTAL_SCALE, Time.deltaTime);
-//			Vector2 midPoint = (mFractalMax + mFractalMin) * 0.5f;
-//			Vector2 extents = Vector2.one * 0.5f * mFractalScale;
-//			mFractalMin = midPoint - extents;
-//			mFractalMax = midPoint + extents;
-//			mFractalBoundsChanged = true;
-//		}
-//		if (Input.GetKey (KeyCode.L)) {
-//			mFractalScale = Mathf.Lerp (mFractalScale, MIN_FRACTAL_SCALE, Time.deltaTime);
-//			Vector2 midPoint = (mFractalMax + mFractalMin) * 0.5f;
-//			Vector2 extents = Vector2.one * 0.5f * mFractalScale;
-//			mFractalMin = midPoint - extents;
-//			mFractalMax = midPoint + extents;
-//			mFractalBoundsChanged = true;
-//		}
 	}
 
 	// Use this for initialization
-	void Start ()
+	protected override void Start ()
 	{
+		base.Start ();
 		//Cursor.lockState = CursorLockMode.Locked;
 		InitFractal ();
 		InitTerrain ();
@@ -179,6 +143,7 @@ public class FractalWorldManager : WorldManager
 	{
 		base.LateInit ();
 		VerifyExploreMode ();
+		mFractalBoundsChanged = true;
 	}
 
 	private void InitTerrain ()
@@ -186,33 +151,40 @@ public class FractalWorldManager : WorldManager
 		if (TargetTerrain) {
 			TargetTerrain.drawHeightmap = true;
 			TargetTerrain.terrainData.heightmapResolution = 256;
-			TargetTerrain.terrainData.size = new Vector3 (128f, 100f, 128f);
+			TargetTerrain.terrainData.size = new Vector3 (128f, (float)InitialIterations, 128f);
 			TargetTerrain.transform.position = new Vector3 (-64f, 0, -64f);
 		}
 	}
 
 	private void InitFractal ()
 	{
-		mMandelbrotfractal.Iterations = 100;
+		mMandelbrotfractal.Iterations = InitialIterations;
+		//mMandelbrotfractal.UseGaussianSmooth = true;
 		mMandelbrotfractal.SetCenter (0.7f, 0);
 		mMandelbrotfractal.SetBounds (mFractalMin.x, mFractalMin.y, mFractalMax.x, mFractalMax.y);
 		mMandelbrotfractal.SetDataSize (256, 256);
 		mMandelbrotfractal.SetInitialIterationPoint (0.3f, 0.6f);
-		mMandelbrotfractal.SetIteratingFunction (FractalLibrary.FractalUtility.QuadMandelbrotIterate);
+		mMandelbrotfractal.SetIteratingFunction (this.QuadJulietIterate);
 	}
 
-	public void QuadJulietIterate (int iterations, out int returnVal, params FractalComplexNumber[] complexNos)
+	public void QuadJulietIterate (int iterations, out float returnVal, params FractalComplexNumber[] complexNos)
 	{
-		returnVal = -1;
+		returnVal = -1f;
 		FractalComplexNumber z = new FractalComplexNumber ();
 		FractalComplexNumber c = complexNos [0];
+		int iterationReached = iterations + 1;
 		for (int i = 0; i < iterations + 1; ++i) {
 			z = z * z + c;
 			if (z.Absolute >= 2f) {
-				returnVal = i;
+				iterationReached = i;
 				break;
 			}
 		}
+		if (iterationReached < iterations) {
+			float correctionVal = Mathf.Log (Mathf.Log (z.Absolute) / Mathf.Log (2f)) / Mathf.Log (2f);
+			returnVal = (float)(iterationReached + 1) - correctionVal;
+		}
+		returnVal = returnVal / (float)iterations;
 	}
 	
 	// Update is called once per frame
@@ -233,7 +205,7 @@ public class FractalWorldManager : WorldManager
 	private void CheckUpdateFractal ()
 	{
 		if (mFractalBoundsChanged) {
-			mMandelbrotfractal.Iterations = (int)(100f / mFractalScale);
+			mMandelbrotfractal.Iterations = (int)((float)InitialIterations / Mathf.Pow (mFractalScale, 2));
 			mMandelbrotfractal.SetBounds (mFractalMin.x, mFractalMin.y, mFractalMax.x, mFractalMax.y);
 			mMandelbrotfractal.RefreshDataSamples ();
 			mTerrainHeightsDirty = true;

@@ -71,7 +71,12 @@ public class WorldManager : MonoBehaviour
 		VerifyUseOculus ();
 	}
 #endif
-	
+
+	protected virtual void Start ()
+	{
+		UseOculus = OVRManager.display.isPresent;
+	}
+
 	public void InitCharacter (CharacterStateMachine character)
 	{
 //		if (ReferenceModel != null) {
@@ -87,6 +92,7 @@ public class WorldManager : MonoBehaviour
 	
 	public virtual void Init ()
 	{
+		OVRManager.DismissHSWDisplay ();
 		if (ReferencePlayerObject != null) {
 			_playerChar = ((GameObject)Network.Instantiate (ReferencePlayerObject, PlayerSpawnPoint, Quaternion.identity, 0)).GetComponent<CharacterStateMachine> ();
 			InitCharacter (_playerChar);
