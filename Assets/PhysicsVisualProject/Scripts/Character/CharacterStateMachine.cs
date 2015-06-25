@@ -192,13 +192,16 @@ public class CharacterStateMachine : MonoBehaviour, IControlListener
 	private void ProcessCurrentRotation ()
 	{
 		Vector3 targetEuler = _targetRotation.eulerAngles;
-		targetEuler.x = targetEuler.z = 0;
+		if (CurrentState != CharacterState.FLY) {
+			targetEuler.x = targetEuler.z = 0;
+		}
 		Quaternion targetRotation = Quaternion.Euler (targetEuler);
 		transform.rotation = Quaternion.Slerp (transform.rotation, targetRotation, Mathf.Sqrt (Time.smoothDeltaTime));
 	}
     
 	private void DecideState ()
 	{
+
 		if (_motionEnabled) {
 			if (_motionVector.sqrMagnitude > 0) {
 				SetState (CharacterState.MOVE);

@@ -14,12 +14,12 @@ public class FractalWorldManager : WorldManager
 	MandelbrotFractal mMandelbrotfractal = new MandelbrotFractal ();
 
 	public Color TestColor;
-
+	
 
 	private const float MAX_FRACTAL_SCALE = 5f;
 	private const float MIN_FRACTAL_SCALE = 0f;
 
-	private float mFractalScale = 1f;
+	private float mFractalScale = 2f;
 	public float FractalScaleSpeed = 1f;
 	private Vector2 mFractalMin = new Vector2 (-1f, -1f);
 	private Vector2 mFractalMax = new Vector2 (1f, 1f);
@@ -27,6 +27,9 @@ public class FractalWorldManager : WorldManager
 	private bool mTerrainHeightsDirty = false;
 	private bool mTerrainTextureDirty = false;
 	public int InitialIterations = 50;
+	private float[,] mFractalData = null;
+	private int mCoreCount = 1;
+
 
 	public float FractalBoundMoveSpeed = 5f;
 
@@ -118,9 +121,11 @@ public class FractalWorldManager : WorldManager
 
 				if (command.Command == (int)COMMAND_TYPE.CAMERA_ZOOM) {
 					float deltaZoom = (float)command.Arguments [0];
-					mFractalScale -= deltaZoom * Time.deltaTime * mFractalScale;
-					mFractalScale = Mathf.Clamp (mFractalScale, MIN_FRACTAL_SCALE, MAX_FRACTAL_SCALE);
-					SetFractalScaleFactor (mFractalScale);
+					if (deltaZoom != 0f) {
+						mFractalScale -= deltaZoom * Time.deltaTime * mFractalScale;
+						mFractalScale = Mathf.Clamp (mFractalScale, MIN_FRACTAL_SCALE, MAX_FRACTAL_SCALE);
+						SetFractalScaleFactor (mFractalScale);
+					}
 				}
 			}
 		}
@@ -130,6 +135,7 @@ public class FractalWorldManager : WorldManager
 	protected override void Start ()
 	{
 		base.Start ();
+		mCoreCount = SystemInfo.processorCount;
 		//Cursor.lockState = CursorLockMode.Locked;
 		InitFractal ();
 		InitTerrain ();
@@ -163,8 +169,10 @@ public class FractalWorldManager : WorldManager
 		mMandelbrotfractal.SetCenter (0.7f, 0);
 		mMandelbrotfractal.SetBounds (mFractalMin.x, mFractalMin.y, mFractalMax.x, mFractalMax.y);
 		mMandelbrotfractal.SetDataSize (256, 256);
+		mMandelbrotfractal.SetDataResolution (100, 100);
 		mMandelbrotfractal.SetInitialIterationPoint (0.3f, 0.6f);
 		mMandelbrotfractal.SetIteratingFunction (this.QuadJulietIterate);
+		mMandelbrotfractal.OnDataGenerated += OnFractalDataUpdate;
 	}
 
 	public void QuadJulietIterate (int iterations, out float returnVal, params FractalComplexNumber[] complexNos)
@@ -208,17 +216,29 @@ public class FractalWorldManager : WorldManager
 			mMandelbrotfractal.Iterations = (int)((float)InitialIterations / Mathf.Pow (mFractalScale, 2));
 			mMandelbrotfractal.SetBounds (mFractalMin.x, mFractalMin.y, mFractalMax.x, mFractalMax.y);
 			mMandelbrotfractal.RefreshDataSamples ();
-			mTerrainHeightsDirty = true;
 			mFractalBoundsChanged = false;
 		}
 	}
+
+	private void OnFractalDataUpdate ()
+	{
+		mFractalData = mMandelbrotfractal.Data;
+		mTerrainHeightsDirty = true;
+		//CustomArrayUtility.FloatArray2dResize.Resize (mFractalData, 256, 256, mCoreCount, this.OnNewDataReceived);
+	}
+
+//	private void OnNewDataReceived (System.Object obj)
+//	{
+//		mFractalData = (float[,])obj;
+//		mTerrainHeightsDirty = true;
+//	}
 
 	private void CheckTerrainHeights ()
 	{
 		if (TargetTerrain && mTerrainHeightsDirty) {
 			float maxheight = (float)mMandelbrotfractal.Iterations;
 			TargetTerrain.terrainData.size = new Vector3 (128f, maxheight, 128f);
-			TargetTerrain.terrainData.SetHeights (0, 0, mMandelbrotfractal.Data.SwapXY ());
+			TargetTerrain.terrainData.SetHeights (0, 0, mFractalData.SwapXY ());
 			mTerrainHeightsDirty = false;
 			mTerrainTextureDirty = true;
 
@@ -235,9 +255,9 @@ public class FractalWorldManager : WorldManager
 			TargetTerrain.terrainData.splatPrototypes [0].texture = terrainsplat;
 		}
 		TargetTerrain.terrainData.splatPrototypes [0].tileSize = new Vector2 (128f, 128f);
-		for (int y = 0; y<=mMandelbrotfractal.Data.GetUpperBound(1); ++y)
-			for (int x=0; x<=mMandelbrotfractal.Data.GetUpperBound(0); ++x) {
-				Color newColor = TestColor * mMandelbrotfractal.Data [x, y] * mMandelbrotfractal.Iterations / 100;
+		for (int y = 0; y<=mFractalData.GetUpperBound(1); ++y)
+			for (int x=0; x<=mFractalData.GetUpperBound(0); ++x) {
+				Color newColor = TestColor * mFractalData [x, y] * mMandelbrotfractal.Iterations / 100;
 				terrainsplat.SetPixel (x, y, newColor);
 				//Debug.Log (string.Format ("Color at {0},{1} : {2}", x, y, terrainsplat.GetPixel (x, y).ToString ()));
 				//yield return null;
@@ -250,8 +270,10 @@ public class FractalWorldManager : WorldManager
 
 	private void MoveFractalBounds (Vector2 direction)
 	{
-		mFractalMax += direction * FractalBoundMoveSpeed * Time.deltaTime * mFractalScale;
-		mFractalMin += direction * FractalBoundMoveSpeed * Time.deltaTime * mFractalScale;
-		mFractalBoundsChanged = true;
+		if (direction.sqrMagnitude > 0f) {
+			mFractalMax += direction * FractalBoundMoveSpeed * Time.deltaTime * mFractalScale;
+			mFractalMin += direction * FractalBoundMoveSpeed * Time.deltaTime * mFractalScale;
+			mFractalBoundsChanged = true;
+		}
 	}
 }
