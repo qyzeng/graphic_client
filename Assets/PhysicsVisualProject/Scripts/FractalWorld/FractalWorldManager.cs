@@ -11,7 +11,8 @@ public class FractalWorldManager : WorldManager
 		WALK = 1,
 	}
 
-	MandelbrotFractal mMandelbrotfractal = new MandelbrotFractal ();
+	MandelbrotFractal mMandBig = new MandelbrotFractal ();
+	MandelbrotFractal mMandSmall = new MandelbrotFractal ();
 
 	public Color TestColor;
 	
@@ -76,7 +77,7 @@ public class FractalWorldManager : WorldManager
 				_playerChar.AddController (StandalonePlayerController.Singleton);
 			}
 			if (_currentCamControl) {
-				_currentCamControl.CamType = CameraControl.CameraType.ORBITAL_CAM;
+				_currentCamControl.CamType = (UseOculus) ? CameraControl.CameraType.FPS_CAM : CameraControl.CameraType.ORBITAL_CAM;
 				_currentCamControl.LookAtTarget = _playerChar.gameObject;
 			}
 			StandalonePlayerController.ControllerMode = CONTROLLER_MODE.ACTION;
@@ -143,6 +144,7 @@ public class FractalWorldManager : WorldManager
 		StandalonePlayerController.OnControllerModeChanged += this.OnControlModeChanged;
 		OnControlModeChanged (StandalonePlayerController.ControllerMode);
 		StandalonePlayerController.Singleton.OnControllerCommandsFired += ControlCommandReceivedHandler;
+		StartCoroutine (CheckFractals ());
 	}
 
 	public override void LateInit ()
@@ -156,23 +158,28 @@ public class FractalWorldManager : WorldManager
 	{
 		if (TargetTerrain) {
 			TargetTerrain.drawHeightmap = true;
-			TargetTerrain.terrainData.heightmapResolution = 256;
-			TargetTerrain.terrainData.size = new Vector3 (128f, (float)InitialIterations, 128f);
+			TargetTerrain.terrainData.heightmapResolution = 1024;
+			TargetTerrain.terrainData.size = new Vector3 (512f, (float)InitialIterations, 512f);
 			TargetTerrain.transform.position = new Vector3 (-64f, 0, -64f);
 		}
 	}
 
 	private void InitFractal ()
 	{
-		mMandelbrotfractal.Iterations = InitialIterations;
-		//mMandelbrotfractal.UseGaussianSmooth = true;
-		mMandelbrotfractal.SetCenter (0.7f, 0);
-		mMandelbrotfractal.SetBounds (mFractalMin.x, mFractalMin.y, mFractalMax.x, mFractalMax.y);
-		mMandelbrotfractal.SetDataSize (256, 256);
-		mMandelbrotfractal.SetDataResolution (100, 100);
-		mMandelbrotfractal.SetInitialIterationPoint (0.3f, 0.6f);
-		mMandelbrotfractal.SetIteratingFunction (this.QuadJulietIterate);
-		mMandelbrotfractal.OnDataGenerated += OnFractalDataUpdate;
+		mMandBig.Iterations = InitialIterations;
+		mMandSmall.Iterations = InitialIterations;
+
+		mMandBig.SetCenter (0.7f, 0);
+		mMandSmall.SetCenter (0.7f, 0);
+
+		mMandBig.SetBounds (mFractalMin.x, mFractalMin.y, mFractalMax.x, mFractalMax.y);
+		mMandSmall.SetBounds (mFractalMin.x / 2f, mFractalMin.y / 2f, mFractalMax.x / 2f, mFractalMax.y / 2f);
+
+		mMandBig.SetDataSize (1024, 1024);
+		mMandBig.SetDataResolution (100, 100);
+		mMandBig.SetInitialIterationPoint (0.3f, 0.6f);
+		mMandBig.SetIteratingFunction (this.QuadJulietIterate);
+		mMandBig.OnDataGenerated += OnFractalDataUpdate;
 	}
 
 	public void QuadJulietIterate (int iterations, out float returnVal, params FractalComplexNumber[] complexNos)
@@ -202,27 +209,40 @@ public class FractalWorldManager : WorldManager
 
 	void FixedUpdate ()
 	{
-		CheckUpdateFractal ();
-		CheckTerrainHeights ();
-		if (mTerrainTextureDirty) {
-			mTerrainTextureDirty = false;
-			StartCoroutine (CheckTerrainTexture ());
+//		CheckUpdateFractal ();
+//		CheckTerrainHeights ();
+//		if (mTerrainTextureDirty) {
+//			mTerrainTextureDirty = false;
+//			CheckTerrainTexture ();
+//		}
+	}
+
+	private IEnumerator CheckFractals ()
+	{
+		while (true) {
+			CheckUpdateFractal ();
+			CheckTerrainHeights ();
+			if (mTerrainTextureDirty) {
+				mTerrainTextureDirty = false;
+				CheckTerrainTexture ();
+			}
+			yield return new WaitForEndOfFrame ();
 		}
 	}
 
 	private void CheckUpdateFractal ()
 	{
 		if (mFractalBoundsChanged) {
-			mMandelbrotfractal.Iterations = (int)((float)InitialIterations / Mathf.Pow (mFractalScale, 2));
-			mMandelbrotfractal.SetBounds (mFractalMin.x, mFractalMin.y, mFractalMax.x, mFractalMax.y);
-			mMandelbrotfractal.RefreshDataSamples ();
 			mFractalBoundsChanged = false;
+			mMandBig.Iterations = (int)((float)InitialIterations / Mathf.Pow (mFractalScale, 2));
+			mMandBig.SetBounds (mFractalMin.x, mFractalMin.y, mFractalMax.x, mFractalMax.y);
+			mMandBig.RefreshDataSamples ();
 		}
 	}
 
 	private void OnFractalDataUpdate ()
 	{
-		mFractalData = mMandelbrotfractal.Data;
+		mFractalData = mMandBig.Data;
 		mTerrainHeightsDirty = true;
 		//CustomArrayUtility.FloatArray2dResize.Resize (mFractalData, 256, 256, mCoreCount, this.OnNewDataReceived);
 	}
@@ -236,7 +256,7 @@ public class FractalWorldManager : WorldManager
 	private void CheckTerrainHeights ()
 	{
 		if (TargetTerrain && mTerrainHeightsDirty) {
-			float maxheight = (float)mMandelbrotfractal.Iterations;
+			float maxheight = (float)mMandBig.Iterations;
 			TargetTerrain.terrainData.size = new Vector3 (128f, maxheight, 128f);
 			TargetTerrain.terrainData.SetHeights (0, 0, mFractalData.SwapXY ());
 			mTerrainHeightsDirty = false;
@@ -245,25 +265,23 @@ public class FractalWorldManager : WorldManager
 		}
 	}
 
-	private IEnumerator CheckTerrainTexture ()
+	private void CheckTerrainTexture ()
 	{
 		Texture2D terrainsplat = TargetTerrain.terrainData.splatPrototypes [0].texture;
 		if (terrainsplat) {
-			terrainsplat.Resize (256, 256, TextureFormat.ARGB32, true);
+			terrainsplat.Resize (1024, 1024, TextureFormat.ARGB32, true);
 		} else {
-			terrainsplat = new Texture2D (256, 256, TextureFormat.ARGB32, true);
+			terrainsplat = new Texture2D (1024, 1024, TextureFormat.ARGB32, true);
 			TargetTerrain.terrainData.splatPrototypes [0].texture = terrainsplat;
 		}
-		TargetTerrain.terrainData.splatPrototypes [0].tileSize = new Vector2 (128f, 128f);
+		TargetTerrain.terrainData.splatPrototypes [0].tileSize = new Vector2 (1024f, 1024f);
 		for (int y = 0; y<=mFractalData.GetUpperBound(1); ++y)
 			for (int x=0; x<=mFractalData.GetUpperBound(0); ++x) {
-				Color newColor = TestColor * mFractalData [x, y] * mMandelbrotfractal.Iterations / 100;
+				Color newColor = TestColor * mFractalData [x, y] * mMandBig.Iterations / 100;
 				terrainsplat.SetPixel (x, y, newColor);
-				//Debug.Log (string.Format ("Color at {0},{1} : {2}", x, y, terrainsplat.GetPixel (x, y).ToString ()));
 				//yield return null;
 			}
 		terrainsplat.Apply ();
-		yield return new WaitForEndOfFrame ();
 	}
 
 

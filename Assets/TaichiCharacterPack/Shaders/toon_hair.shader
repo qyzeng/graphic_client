@@ -25,6 +25,7 @@ Shader "Toon/Hair"
 		CGPROGRAM
 		//#pragma surface surfHair ToonHair vertex:vert
 		#pragma surface surfHair ToonHair vertex:vert
+		#include "UnityStandardBRDF.cginc"
 		//	Toon Hair Surface Shader for Unity
 		//	File		:	ToonSurfaceHair.cginc
 		//	Title		:	Toon Surface Shader with Alpha
@@ -103,7 +104,7 @@ Shader "Toon/Hair"
 			
 			// Sphere Map
 			float3 viewNormal = normalize( IN.customColor );
-			float3 viewNormal2 = normalize( mul( UNITY_MATRIX_MV, float4(normalize(o.Normal), 0.0) ).xyz );
+			float3 viewNormal2 = normalize( mul( UNITY_MATRIX_MV, float4(Unity_SafeNormalize(o.Normal), 0.0) ).xyz );
 			
 			viewNormal = normalize(viewNormal*0.7 + viewNormal2*0.3);
 			
