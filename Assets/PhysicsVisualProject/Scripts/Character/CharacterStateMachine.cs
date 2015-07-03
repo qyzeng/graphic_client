@@ -97,6 +97,7 @@ namespace WP.Character
 				}
 			}
 		}
+		private CharacterState _previousState = CharacterState.IDLE;
 
 		private CharacterBaseState _currentStateObj = null;
 
@@ -147,12 +148,18 @@ namespace WP.Character
 				_actionCooldown = 1f / (Mathf.Clamp (newSpeedVal, float.Epsilon, float.MaxValue));
 			}
 		}
+
+		public void RevertToPreviousState ()
+		{
+			SetState (_previousState);
+		}
     
 		private void ProcessStateTransition (CharacterState prevState, CharacterState newState)
 		{
 			if (_currentStateObj != null) {
 				_currentStateObj.OnExit (this);
 			}
+			_previousState = prevState;
 
 			if (CharacterStateUtility.StateReference.ContainsKey (newState)) {
 				_currentStateObj = CharacterStateUtility.StateReference [newState];
@@ -161,47 +168,6 @@ namespace WP.Character
 				_currentStateObj.OnEnter (this);
 			}
 
-			/*
-			switch (prevState) {
-			case CharacterState.IDLE:
-				CancelInvoke ("PlayIdleSound");
-				break;
-			case CharacterState.MOVE:
-				CancelInvoke ("PlayMoveSound");
-				break;
-			case CharacterState.FLY:
-				_motor.GravityAffect = true;
-				break;
-			}
-
-			switch (newState) {
-			case CharacterState.INTERACT:
-				Interact ();
-				break;
-			case CharacterState.ACTION:
-				Action ();
-				break;
-			case CharacterState.DEAD:
-                //Destroy(this.gameObject);
-				Die ();
-				break;
-			case CharacterState.MOVE:
-				Move ();
-				break;
-			case CharacterState.STUN:
-				Stun ();
-				break;
-			case CharacterState.FLY:
-				Fly ();
-				break;
-			case CharacterState.JUMP:
-				Jump ();
-				break;
-			default:
-				Idle ();
-				break;
-			}
-			 */
 		}
     
 		private void Update ()
@@ -241,6 +207,7 @@ namespace WP.Character
 				}
 			}
 			if (_actionTriggered) {
+				_actionTriggered = false;
 				SetState (CharacterState.ACTION);
 			}
 			if (_jumpTriggered) {
@@ -251,77 +218,10 @@ namespace WP.Character
     
 		private void ProcessCurrentState ()
 		{
-//		switch (CurrentState) {
-//		case CharacterState.MOVE:
-//			Moving ();
-//			break;
-//		case CharacterState.IDLE:
-//			Idling ();
-//			break;
-//		case CharacterState.ACTION:
-//			InAction ();
-//			break;
-//		case CharacterState.FLY:
-//			Flying ();
-//			break;
-//		}
-//			if (_CurrentStateProcess != null) {
-//				_CurrentStateProcess ();
-//			}
 
 			if (_currentStateObj != null) {
 				_currentStateObj.Update (this, Time.deltaTime);
 			}
-		}
-
-		private void Jump ()
-		{
-			_animationControl.Jump ();
-			_motor.Jump ();
-			_CurrentStateProcess = Jumping;
-		}
-
-		private void Jumping ()
-		{
-			if (_motor.IsOnGround && _animationControl.IsJumping ()) {
-				_animationControl.Land ();
-				SetState (CharacterState.IDLE);
-			}
-		}
-
-		private void Fly ()
-		{
-			_motor.GravityAffect = false;
-			_animationControl.ForwardSpeed = 0;
-			_motor.ResetMoveVector ();
-			_CurrentStateProcess = Flying;
-		}
-
-		private void Flying ()
-		{
-			_motor.ResetMoveVector ();
-
-			if (_motionVector.x > 0) {
-				_motor.MoveRight (_motionVector.x);
-			} else {
-				_motor.MoveLeft (-_motionVector.x);
-			}
-			if (_motionVector.y > 0) {
-				_motor.MoveForward (_motionVector.y);
-			} else {
-				_motor.MoveBack (-_motionVector.y);
-			}
-		}
-
-		private void Move ()
-		{
-			if (ModelObject != null) {
-				ModelAudioData audioData = ModelAudioData.GetModelAudioData (ModelObject);
-				if (audioData.MovingClip != null) {
-					InvokeRepeating ("PlayMoveSound", 0f, audioData.MovingClip.length);
-				}
-			}
-			_CurrentStateProcess = Moving;
 		}
 
 		private void PlayMoveSound ()
@@ -333,44 +233,6 @@ namespace WP.Character
 				}
 			}
 		}
-    
-		private void Moving ()
-		{
-			_motor.ResetMoveVector ();
-			if (_motionVector.y > 0) {
-				if (_motionVector.x > 0) {
-					_motor.MoveRight (_motionVector.x);
-				} else {
-					_motor.MoveLeft (-_motionVector.x);
-				}
-			}
-			if (_motionVector.y > 0) {
-				_motor.MoveForward (_motionVector.y);
-			} else {
-				_motor.MoveBack (-_motionVector.y);
-			}
-			_animationControl.ForwardSpeed = _motionVector.y;
-			_animationControl.SideSpeed = _motionVector.x;
-		}
-    
-		private void Idling ()
-		{
-			_motor.ResetMoveVector ();
-		}
-
-		private void Idle ()
-		{
-			if (ModelObject != null) {
-				ModelAudioData audioData = ModelAudioData.GetModelAudioData (ModelObject);
-				if (audioData.IdleClip != null) {
-					InvokeRepeating ("PlayIdleSound", 0f, audioData.IdleClip.length);
-				}
-			}
-			_animationControl.ForwardSpeed = 0;
-			_animationControl.SideSpeed = 0;
-			_motor.ResetMoveVector ();  
-			_CurrentStateProcess = Idling;
-		}
 
 		private void PlayIdleSound ()
 		{
@@ -381,23 +243,6 @@ namespace WP.Character
 				}
 			}
 		}
-    
-		private void Interact ()
-		{
-			_animationControl.ForwardSpeed = 0;
-			_animationControl.SideSpeed = 0;
-			_motor.ResetMoveVector ();
-		}
-
-		private void Action ()
-		{
-			_animationControl.ForwardSpeed = 0;
-			_animationControl.SideSpeed = 0;
-			_motor.ResetMoveVector ();
-			_animationControl.Action ();
-			_actionTriggered = false;
-			PlayActionSound ();
-		}
 
 		private void PlayActionSound ()
 		{
@@ -406,14 +251,6 @@ namespace WP.Character
 				if (audioData.ActionClip != null) {
 					AudioSource.PlayClipAtPoint (audioData.ActionClip, transform.position);
 				}
-			}
-		}
-
-		private void InAction ()
-		{
-			_motor.ResetMoveVector ();
-			if (!_animationControl.IsInAction ()) {
-				SetState (CharacterState.IDLE);
 			}
 		}
 
