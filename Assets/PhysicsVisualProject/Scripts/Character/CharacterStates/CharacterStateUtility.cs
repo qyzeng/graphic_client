@@ -13,7 +13,8 @@ namespace WP.Character
 			{ CharacterState.JUMP, new CharacterJumpState() },
 			{ CharacterState.FLY, new CharacterFlyState() },
 			{ CharacterState.INTERACT, new CharacterInteractState() },
-			{ CharacterState.ACTION, new CharacterActionState() }
+			{ CharacterState.ACTION, new CharacterActionState() },
+			{ CharacterState.DEAD, new CharacterDieState() }
 		};
 	}
 }
