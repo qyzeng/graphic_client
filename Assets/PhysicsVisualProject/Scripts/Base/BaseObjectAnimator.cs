@@ -4,8 +4,6 @@ using System.Reflection;
 
 public class BaseObjectAnimator : MonoBehaviour
 {
-	private System.Type _animatorTypeRef = typeof(Animator);
-
 	public delegate void AnimatorStateTransitionHandler (int layer,AnimatorTransitionInfo transition);
 	/// <summary>
 	/// Occurs when animator state transits.

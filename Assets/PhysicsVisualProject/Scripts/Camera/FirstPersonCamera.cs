@@ -11,8 +11,6 @@ public class FirstPersonCamera : BaseCamera
 	
 	private Vector2 _currentEulerXY;
 
-	private float _upperBound_Y = 60f;
-	private float _lowerBound_Y = -60f;
 	public float SmoothingPower = 0.35f;
 
 	protected override void Start ()

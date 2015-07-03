@@ -34,8 +34,9 @@ public class OrbitalCamera : BaseCamera
 		_targetDistance = Distance;
 	}
     
-	private void OnEnable ()
+	protected override void OnEnable ()
 	{
+		base.OnEnable ();
 		_currentEulerXY.y = transform.rotation.eulerAngles.x;
 		_currentEulerXY.x = transform.rotation.eulerAngles.y;
 		_prevEulerXY = _currentEulerXY;

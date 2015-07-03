@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using WP.Character;
 
 public class WorldManager : MonoBehaviour
 {

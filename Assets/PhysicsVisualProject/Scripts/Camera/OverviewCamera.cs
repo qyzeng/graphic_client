@@ -42,13 +42,13 @@ public class OverviewCamera : BaseCamera
 	}
 
 	// Use this for initialization
-	void Start ()
+	protected override void Start ()
 	{
-	
+		base.Start ();
 	}
 	
 	// Update is called once per frame
-	void Update ()
+	protected override void Update ()
 	{
 		this.transform.LookAt (TargetNode.position);
 	}

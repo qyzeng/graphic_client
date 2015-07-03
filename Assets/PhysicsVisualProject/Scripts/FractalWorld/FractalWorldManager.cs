@@ -2,6 +2,7 @@
 using System.Collections;
 using FractalLibrary;
 using WP.Controller;
+using WP.Character;
 
 public class FractalWorldManager : WorldManager
 {
@@ -177,7 +178,13 @@ public class FractalWorldManager : WorldManager
 
 		mMandBig.SetDataSize (1024, 1024);
 		mMandBig.SetDataResolution (100, 100);
+
+		mMandSmall.SetDataSize (512, 512);
+		mMandSmall.SetDataResolution (100, 100);
+
 		mMandBig.SetInitialIterationPoint (0.3f, 0.6f);
+		mMandSmall.SetInitialIterationPoint (0.3f, 0.6f);
+
 		mMandBig.SetIteratingFunction (this.QuadJulietIterate);
 		mMandBig.OnDataGenerated += OnFractalDataUpdate;
 	}

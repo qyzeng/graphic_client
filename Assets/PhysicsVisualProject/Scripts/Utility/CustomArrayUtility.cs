@@ -111,7 +111,7 @@ namespace CustomArrayUtility
 		private static void ResizeFuntion (System.Object obj)
 		{
 			ArrayResizeThreadData td = (ArrayResizeThreadData)obj;
-			int oldArrayWidth = _oldArray.GetUpperBound (0) + 1;
+			//int oldArrayWidth = _oldArray.GetUpperBound (0) + 1;
 			for (int y = td.Start; y < td.End; ++y) {
 				int yFloor = (int)(y * _ratioY);
 				int yCeil = (int)Mathf.Ceil (y * _ratioY);
