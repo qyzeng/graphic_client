@@ -11,7 +11,7 @@ namespace WP.Character
 			csm.AnimationControl.SideSpeed = 0;
 			csm.Motor.ResetMoveVector ();
 			csm.AnimationControl.Die ();
-			csm.Invoke ("PlayDieSound");
+			csm.Invoke ("PlayDieSound", 0f);
 		}
 	}
 }
