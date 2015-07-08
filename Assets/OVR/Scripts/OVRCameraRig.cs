@@ -96,7 +96,7 @@ public class OVRCameraRig : MonoBehaviour
 #if !UNITY_ANDROID || UNITY_EDITOR
 	private void LateUpdate ()
 #else
-	private void Update()
+	private void Update ()
 #endif
 	{
 		

@@ -5,57 +5,14 @@ using System.Timers;
 
 namespace WP.Controller
 {
-	public enum CONTROLLER_MODE
+	public class StandalonePlayerController : BaseController<StandalonePlayerController>
 	{
-		NORMAL,
-		ACTION,
-	}
-
-	public class StandalonePlayerController : MonoBehaviour , IController
-	{
-		private static StandalonePlayerController _instance = null;
-		public static StandalonePlayerController Singleton {
-			get {
-				if (_instance == null) {
-					_instance = GameObject.FindObjectOfType<StandalonePlayerController> ();
-					if (_instance == null) {
-						GameObject instObj = new GameObject ("StandalonePlayerController");
-						GameObject.DontDestroyOnLoad (instObj);
-						_instance = instObj.AddComponent<StandalonePlayerController> ();
-					}
-				}
-				return _instance;
-			}
-		}
-
-		private static CONTROLLER_MODE _ControllerMode = CONTROLLER_MODE.NORMAL;
-		public static CONTROLLER_MODE ControllerMode {
-			get {
-				return _ControllerMode;
-			}
-			set {
-				if (_ControllerMode != value) {
-					_ControllerMode = value;
-					Singleton.ResetControllerCommands ();
-					if (OnControllerModeChanged != null) {
-						OnControllerModeChanged (_ControllerMode);
-					}
-				}
-			}
-		}
-
-		public delegate void ControllerModeChangedHandler (CONTROLLER_MODE mode);
-		public static event ControllerModeChangedHandler OnControllerModeChanged;
-
-		public event ControllerCommandsFireHandler OnControllerCommandsFired;
-    
-		System.Collections.Generic.List<CommandFiredEventArgs> _commandList = new System.Collections.Generic.List<CommandFiredEventArgs> ();
-
 		private Timer _actionCooldownTimer = new Timer (400);
 		//private bool _actionTriggered = false;
 
 		private void OnControlModeChanged (CONTROLLER_MODE mode)
 		{
+			ResetControllerCommands ();
 			Cursor.lockState = mode == CONTROLLER_MODE.ACTION ? CursorLockMode.Locked : CursorLockMode.None;
 			Cursor.visible = (mode == CONTROLLER_MODE.NORMAL);
 		}
@@ -63,9 +20,9 @@ namespace WP.Controller
 		private void ReadRawInput ()
 		{
 			if (Input.GetKeyDown (KeyCode.F)) {
-				ControllerMode = (ControllerMode == CONTROLLER_MODE.ACTION) ? CONTROLLER_MODE.NORMAL : CONTROLLER_MODE.ACTION;
+				ControllerUtility.ControllerMode = (ControllerUtility.ControllerMode == CONTROLLER_MODE.ACTION) ? CONTROLLER_MODE.NORMAL : CONTROLLER_MODE.ACTION;
 			}
-			if (ControllerMode == CONTROLLER_MODE.ACTION) {
+			if (ControllerUtility.ControllerMode == CONTROLLER_MODE.ACTION) {
 				float camhorizontal = Input.GetAxis ("Mouse X");
 				float camvertical = Input.GetAxis ("Mouse Y");
 				_commandList.Add (CommandFiredEventArgs.GenerateArgs ((ushort)COMMAND_TYPE.CAMERA_HORIZONTAL, camhorizontal));
@@ -78,7 +35,7 @@ namespace WP.Controller
 //				}
 			}
 
-			if (ControllerMode == CONTROLLER_MODE.NORMAL) {
+			if (ControllerUtility.ControllerMode == CONTROLLER_MODE.NORMAL) {
 				float camhorizontal = 0f;
 				if (Input.GetKey (KeyCode.Q)) {
 					camhorizontal = -1f;
@@ -105,7 +62,7 @@ namespace WP.Controller
 			_commandList.Add (playerHorizontal);
 			_commandList.Add (playerVertical);
         
-			if (horizontal != 0 || vertical != 0 || ControllerMode == CONTROLLER_MODE.ACTION) {
+			if (horizontal != 0 || vertical != 0 || ControllerUtility.ControllerMode == CONTROLLER_MODE.ACTION) {
 //                CommandFiredEventArgs resetCam = CommandFiredEventArgs.GenerateArgs((ushort)COMMAND_TYPE.RESET_CAMERA);
 //                _commandList.Add(resetCam);
 				if (Camera.main != null) {
@@ -119,14 +76,6 @@ namespace WP.Controller
 				CommandFiredEventArgs camZoom = CommandFiredEventArgs.GenerateArgs ((ushort)COMMAND_TYPE.CAMERA_ZOOM, scroll);
 				_commandList.Add (camZoom);
 			}
-		}
-    
-		private void DispatchCommands ()
-		{
-			if (OnControllerCommandsFired != null && _commandList.Count > 0) {
-				OnControllerCommandsFired (_commandList);
-			}
-			_commandList.Clear ();
 		}
 
 		private void ResetControllerCommands ()
@@ -142,8 +91,6 @@ namespace WP.Controller
 		{
 			CommandFiredEventArgs actionArg = CommandFiredEventArgs.GenerateArgs ((ushort)COMMAND_TYPE.PLAYER_ACTION);
 			_commandList.Add (actionArg);
-
-            
 		}
     
 		private void OnActionCooldownEnd (object sender, ElapsedEventArgs args)
@@ -154,8 +101,8 @@ namespace WP.Controller
 		// Use this for initialization
 		void Start ()
 		{
-			OnControlModeChanged (ControllerMode);
-			OnControllerModeChanged += this.OnControlModeChanged;
+			OnControlModeChanged (ControllerUtility.ControllerMode);
+			ControllerUtility.OnControllerModeChanged += this.OnControlModeChanged;
 			_actionCooldownTimer.Elapsed += OnActionCooldownEnd;
 		}
 	
@@ -166,10 +113,10 @@ namespace WP.Controller
 			DispatchCommands ();
 		}
 
-		void OnDestroy ()
+		protected override void OnDestroy ()
 		{
-			this.OnControllerCommandsFired = null;
-			OnControllerModeChanged -= this.OnControlModeChanged;
+			base.OnDestroy ();
+			ControllerUtility.OnControllerModeChanged -= this.OnControlModeChanged;
 			_actionCooldownTimer.Elapsed -= OnActionCooldownEnd;
 		}
 	}

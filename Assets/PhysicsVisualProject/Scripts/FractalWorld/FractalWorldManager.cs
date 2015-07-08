@@ -39,6 +39,8 @@ public class FractalWorldManager : WorldManager
 	private GameObject mBoundaryObject = null;
 	public Bounds GameBounds;
 
+	private Texture2D mTempTexPointer = null;
+
 	[SerializeField]
 	private FRACTAL_EXPLORE_MODE
 		mExploreMode = FRACTAL_EXPLORE_MODE.FLY;
@@ -57,11 +59,17 @@ public class FractalWorldManager : WorldManager
 
 	private void VerifyExploreMode ()
 	{
+		IController controllerToUse = null;
+		if (UseOculus) {
+			controllerToUse = OculusController.Singleton;
+		} else {
+			controllerToUse = StandalonePlayerController.Singleton;
+		}
 		switch (mExploreMode) {
 		case FRACTAL_EXPLORE_MODE.FLY:
 			if (_playerChar) {
 				_playerChar.SetState (CharacterState.FLY);
-				_playerChar.RemoveController (StandalonePlayerController.Singleton);
+				_playerChar.RemoveController (controllerToUse);
 			}
 			if (_currentCamControl) {
 				_currentCamControl.CamType = CameraControl.CameraType.OVERVIEW_CAM;
@@ -69,19 +77,19 @@ public class FractalWorldManager : WorldManager
 				_currentCamControl.transform.position = PlayerSpawnPoint;
 				_currentCamControl.OverrideRotation (Quaternion.Euler (90f * Vector3.right));
 			}
-			StandalonePlayerController.ControllerMode = CONTROLLER_MODE.NORMAL;
+			ControllerUtility.ControllerMode = CONTROLLER_MODE.NORMAL;
 			break;
 		case FRACTAL_EXPLORE_MODE.WALK:
 			if (_playerChar) {
 				_playerChar.SetState (CharacterState.IDLE);
 				_playerChar.transform.position = PlayerSpawnPoint;
-				_playerChar.AddController (StandalonePlayerController.Singleton);
+				_playerChar.AddController (controllerToUse);
 			}
 			if (_currentCamControl) {
 				_currentCamControl.CamType = (UseOculus) ? CameraControl.CameraType.FPS_CAM : CameraControl.CameraType.ORBITAL_CAM;
 				_currentCamControl.LookAtTarget = _playerChar.gameObject;
 			}
-			StandalonePlayerController.ControllerMode = CONTROLLER_MODE.ACTION;
+			ControllerUtility.ControllerMode = CONTROLLER_MODE.ACTION;
 			break;
 		}
 	}
@@ -141,10 +149,14 @@ public class FractalWorldManager : WorldManager
 		//Cursor.lockState = CursorLockMode.Locked;
 		InitFractal ();
 		InitTerrain ();
-		StandalonePlayerController.ControllerMode = ExploreMode == FRACTAL_EXPLORE_MODE.WALK ? CONTROLLER_MODE.ACTION : CONTROLLER_MODE.NORMAL;
-		StandalonePlayerController.OnControllerModeChanged += this.OnControlModeChanged;
-		OnControlModeChanged (StandalonePlayerController.ControllerMode);
-		StandalonePlayerController.Singleton.OnControllerCommandsFired += ControlCommandReceivedHandler;
+		ControllerUtility.ControllerMode = ExploreMode == FRACTAL_EXPLORE_MODE.WALK ? CONTROLLER_MODE.ACTION : CONTROLLER_MODE.NORMAL;
+		ControllerUtility.OnControllerModeChanged += this.OnControlModeChanged;
+		OnControlModeChanged (ControllerUtility.ControllerMode);
+		if (UseOculus) {
+			OculusController.Singleton.OnControllerCommandsFired += ControlCommandReceivedHandler;
+		} else {
+			StandalonePlayerController.Singleton.OnControllerCommandsFired += ControlCommandReceivedHandler;
+		}
 		StartCoroutine (CheckFractals ());
 	}
 
@@ -159,7 +171,7 @@ public class FractalWorldManager : WorldManager
 	{
 		if (TargetTerrain) {
 			TargetTerrain.drawHeightmap = true;
-			TargetTerrain.terrainData.heightmapResolution = 1024;
+			TargetTerrain.terrainData.heightmapResolution = 512;
 			TargetTerrain.terrainData.size = new Vector3 (512f, (float)InitialIterations, 512f);
 			TargetTerrain.transform.position = new Vector3 (-64f, 0, -64f);
 		}
@@ -176,7 +188,7 @@ public class FractalWorldManager : WorldManager
 		mMandBig.SetBounds (mFractalMin.x, mFractalMin.y, mFractalMax.x, mFractalMax.y);
 		mMandSmall.SetBounds (mFractalMin.x / 2f, mFractalMin.y / 2f, mFractalMax.x / 2f, mFractalMax.y / 2f);
 
-		mMandBig.SetDataSize (1024, 1024);
+		mMandBig.SetDataSize (100, 100);
 		mMandBig.SetDataResolution (100, 100);
 
 		mMandSmall.SetDataSize (512, 512);
@@ -227,68 +239,87 @@ public class FractalWorldManager : WorldManager
 	private IEnumerator CheckFractals ()
 	{
 		while (true) {
-			CheckUpdateFractal ();
-			CheckTerrainHeights ();
+			yield return StartCoroutine (CheckUpdateFractal ());
+			yield return StartCoroutine (CheckTerrainHeights ());
 			if (mTerrainTextureDirty) {
 				mTerrainTextureDirty = false;
-				CheckTerrainTexture ();
+				yield return StartCoroutine (CheckTerrainTexture ());
 			}
 			yield return new WaitForEndOfFrame ();
 		}
 	}
 
-	private void CheckUpdateFractal ()
+	private IEnumerator CheckUpdateFractal ()
 	{
 		if (mFractalBoundsChanged) {
 			mFractalBoundsChanged = false;
 			mMandBig.Iterations = (int)((float)InitialIterations / Mathf.Pow (mFractalScale, 2));
 			mMandBig.SetBounds (mFractalMin.x, mFractalMin.y, mFractalMax.x, mFractalMax.y);
+			yield return null;
+			//StartCoroutine (mMandBig.UnityRefreshData ());
 			mMandBig.RefreshDataSamples ();
+			yield return null;
 		}
 	}
 
-	private void OnFractalDataUpdate ()
+	private void OnFractalDataUpdate (params object[] args)
 	{
 		mFractalData = mMandBig.Data;
 		mTerrainHeightsDirty = true;
-		//CustomArrayUtility.FloatArray2dResize.Resize (mFractalData, 256, 256, mCoreCount, this.OnNewDataReceived);
+		//StartCoroutine (CustomArrayUtility.FloatArray2dResize.UnityResize2dArray (mFractalData, 512, 512, this.OnNewDataReceived));
+		//Invoke ("StartResizeArray", 0);
 	}
 
-//	private void OnNewDataReceived (System.Object obj)
-//	{
-//		mFractalData = (float[,])obj;
-//		mTerrainHeightsDirty = true;
-//	}
+	private void OnNewDataReceived (System.Object obj)
+	{
+		mFractalData = (float[,])obj;
+	}
 
-	private void CheckTerrainHeights ()
+	private IEnumerator CheckTerrainHeights ()
 	{
 		if (TargetTerrain && mTerrainHeightsDirty) {
-			float maxheight = (float)mMandBig.Iterations;
-			TargetTerrain.terrainData.size = new Vector3 (128f, maxheight, 128f);
-			TargetTerrain.terrainData.SetHeights (0, 0, mFractalData.SwapXY ());
 			mTerrainHeightsDirty = false;
 			mTerrainTextureDirty = true;
-
+			yield return StartCoroutine (CustomArrayUtility.FloatArray2dResize.UnityResize2dArray (mFractalData, 512, 512, this.OnNewDataReceived));
+			float maxheight = (float)mMandBig.Iterations;
+			TargetTerrain.terrainData.size = new Vector3 (128f, maxheight, 128f);
+			float[,] dataToUse = new float[0, 0];
+			dataToUse = mFractalData.SwapXY ();
+			//yield return StartCoroutine (Utility.SwapArrayXY (mFractalData, dataToUse));
+			yield return null;
+			TargetTerrain.terrainData.SetHeights (0, 0, dataToUse);
 		}
 	}
 
-	private void CheckTerrainTexture ()
+	private IEnumerator CheckTerrainTexture ()
 	{
 		Texture2D terrainsplat = TargetTerrain.terrainData.splatPrototypes [0].texture;
-		if (terrainsplat) {
-			terrainsplat.Resize (1024, 1024, TextureFormat.ARGB32, true);
-		} else {
-			terrainsplat = new Texture2D (1024, 1024, TextureFormat.ARGB32, true);
+		if (terrainsplat == null) {
+			terrainsplat = new Texture2D (512, 512, TextureFormat.ARGB32, true);
 			TargetTerrain.terrainData.splatPrototypes [0].texture = terrainsplat;
+		} else {
+			terrainsplat.Resize (512, 512, TextureFormat.ARGB32, true);
 		}
-		TargetTerrain.terrainData.splatPrototypes [0].tileSize = new Vector2 (1024f, 1024f);
-		for (int y = 0; y<=mFractalData.GetUpperBound(1); ++y)
+
+//		if (mTempTexPointer) {
+//			mTempTexPointer.Resize (512, 512, TextureFormat.ARGB32, true);
+//		} else {
+//			mTempTexPointer = new Texture2D (512, 512, TextureFormat.ARGB32, true);
+//		}
+
+
+		TargetTerrain.terrainData.splatPrototypes [0].tileSize = new Vector2 (512f, 512f);
+		for (int y = 0; y<=mFractalData.GetUpperBound(1); ++y) {
 			for (int x=0; x<=mFractalData.GetUpperBound(0); ++x) {
-				Color newColor = TestColor * mFractalData [x, y] * mMandBig.Iterations / 100;
+				Color newColor = TestColor * mFractalData [x, y] * mMandBig.Iterations / InitialIterations;
 				terrainsplat.SetPixel (x, y, newColor);
 				//yield return null;
 			}
-		terrainsplat.Apply ();
+			terrainsplat.Apply ();
+			yield return null;
+		}
+		
+		//Graphics.Blit (mTempTexPointer, TargetTerrain.terrainData.splatPrototypes [0].texture);
 	}
 
 

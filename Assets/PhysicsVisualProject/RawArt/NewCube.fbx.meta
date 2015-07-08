@@ -23,6 +23,7 @@ ModelImporter:
     3300004: //RootNode
     4300000: Cube
     4300002: CustomCube
+    6400000: //RootNode
   materials:
     importMaterials: 1
     materialName: 0
@@ -48,7 +49,7 @@ ModelImporter:
     lODScreenPercentages: []
     globalScale: 1
     meshCompression: 0
-    addColliders: 0
+    addColliders: 1
     importBlendShapes: 1
     swapUVChannels: 0
     generateSecondaryUV: 0
@@ -64,8 +65,8 @@ ModelImporter:
   tangentSpace:
     normalSmoothAngle: 60
     splitTangentsAcrossUV: 1
-    normalImportMode: 0
-    tangentImportMode: 1
+    normalImportMode: 2
+    tangentImportMode: 2
   importAnimation: 1
   copyAvatar: 0
   humanDescription:

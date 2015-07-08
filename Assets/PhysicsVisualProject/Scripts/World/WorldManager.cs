@@ -105,11 +105,17 @@ public class WorldManager : MonoBehaviour
 	}
 	public virtual void LateInit ()
 	{
+		WP.Controller.IController controllerToUse = null;
+		if (UseOculus) {
+			controllerToUse = WP.Controller.OculusController.Singleton;
+		} else {
+			controllerToUse = WP.Controller.StandalonePlayerController.Singleton;
+		}
 		if (_playerChar != null) {
-			_playerChar.AddController (WP.Controller.StandalonePlayerController.Singleton);
+			_playerChar.AddController (controllerToUse);
 		}
 		if (_currentCamControl != null) {
-			_currentCamControl.AddController (WP.Controller.StandalonePlayerController.Singleton);
+			_currentCamControl.AddController (controllerToUse);
 			if (_playerChar)
 				_currentCamControl.LookAtTarget = _playerChar.gameObject;
 		}

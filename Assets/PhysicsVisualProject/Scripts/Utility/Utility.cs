@@ -55,6 +55,17 @@ public static class Utility
 		return targetArr;
 	}
 
+	public static IEnumerator SwapArrayXY (float[,] sourceArr, float[,] targetArr)
+	{
+		targetArr = new float[sourceArr.GetUpperBound (1) + 1, sourceArr.GetUpperBound (0) + 1]; 
+		for (int targetY = 0; targetY<=targetArr.GetUpperBound(1); ++targetY) {
+			for (int targetX=0; targetX<=targetArr.GetUpperBound(0); ++targetX) {
+				targetArr [targetX, targetY] = sourceArr [targetY, targetX];
+			}
+			yield return null;
+		}
+	}
+
 	/// <summary>
 	/// Gets the center node. Please do not call this every frame. Call and store it.
 	/// </summary>

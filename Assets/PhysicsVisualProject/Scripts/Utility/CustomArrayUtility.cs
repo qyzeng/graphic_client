@@ -129,6 +129,32 @@ namespace CustomArrayUtility
 			++_finishedCount;
 			_mutex.ReleaseMutex ();
 		}
+
+		public static IEnumerator UnityResize2dArray (float[,] array, int targetWidth, int targetHeight, ArrayResizeCompleteHandler completeHandler = null)
+		{
+			float[,] newArray = new float[targetWidth, targetHeight];
+			float ratioX = ((float)(array.GetUpperBound (0) + 1)) / targetWidth;
+			float ratioY = ((float)(array.GetUpperBound (1) + 1)) / targetHeight;
+			for (int y = 0; y < targetHeight; ++y) {
+				int yFloor = Mathf.FloorToInt (y * ratioY);
+				int yCeil = Mathf.CeilToInt (y * ratioY);
+				yCeil = Mathf.Min (yCeil, array.GetUpperBound (1));
+				float yLerp = y * ratioY - yFloor;
+				for (int x = 0; x < targetWidth; ++x) {
+					int xFloor = Mathf.FloorToInt (x * ratioX);
+					int xCeil = Mathf.CeilToInt (x * ratioX);
+					xCeil = Mathf.Min (xCeil, array.GetUpperBound (0));
+					float xLerp = x * ratioX - xFloor;
+					float topVal = Mathf.Lerp (array [xFloor, yFloor], array [xCeil, yFloor], xLerp);
+					float botVal = Mathf.Lerp (array [xFloor, yCeil], array [xCeil, yCeil], xLerp);
+					newArray [x, y] = Mathf.Lerp (topVal, botVal, yLerp);
+				}
+				yield return null;
+			}
+			if (completeHandler != null) {
+				completeHandler (newArray);
+			}
+		}
 	}
 
 	public class ArrayResizeThreadData

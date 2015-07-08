@@ -320,7 +320,7 @@ public class OVRMainMenu : MonoBehaviour
 		
 		// Make sure to hide cursor 
 		if (Application.isEditor == false) {
-#if UNITY_5_0
+#if UNITY_5
 			Cursor.visible = false; 
 			Cursor.lockState = CursorLockMode.Locked;
 #else
@@ -458,20 +458,16 @@ public class OVRMainMenu : MonoBehaviour
 
 #if !USE_NEW_GUI		
 		// Fade in screen
-		if(AlphaFadeValue > 0.0f)
-		{
-			AlphaFadeValue -= Mathf.Clamp01(Time.deltaTime / FadeInTime);
-			if(AlphaFadeValue < 0.0f)
-			{
+		if (AlphaFadeValue > 0.0f) {
+			AlphaFadeValue -= Mathf.Clamp01 (Time.deltaTime / FadeInTime);
+			if (AlphaFadeValue < 0.0f) {
 				AlphaFadeValue = 0.0f;	
-			}
-			else
-			{
-				GUI.color = new Color(0, 0, 0, AlphaFadeValue);
-				GUI.DrawTexture( new Rect(0, 0, Screen.width, Screen.height ), FadeInTexture ); 
+			} else {
+				GUI.color = new Color (0, 0, 0, AlphaFadeValue);
+				GUI.DrawTexture (new Rect (0, 0, Screen.width, Screen.height), FadeInTexture); 
 				return;
 			}
-        }
+		}
 #endif
 		// We can turn on the render object so we can render the on-screen menu
 		if (GUIRenderObject != null) {
@@ -817,40 +813,38 @@ public class OVRMainMenu : MonoBehaviour
         
 
 #if !USE_NEW_GUI
-        int y = VRVarsSY;
+		int y = VRVarsSY;
 #if	SHOW_DK2_VARIABLES
 		// Print out Vision Mode
 		GuiHelper.StereoBox (VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY, 
 							 ref strVisionMode, Color.green);
 #endif
 
-        // Draw FPS
-        GuiHelper.StereoBox(VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY,
+		// Draw FPS
+		GuiHelper.StereoBox (VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY,
                              ref strFPS, Color.green);
 
-        // Don't draw these vars if CameraController is not present
-        if (CameraController != null)
-        {
-            GuiHelper.StereoBox(VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY,
+		// Don't draw these vars if CameraController is not present
+		if (CameraController != null) {
+			GuiHelper.StereoBox (VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY,
                              ref strPrediction, Color.white);
-            GuiHelper.StereoBox(VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY,
+			GuiHelper.StereoBox (VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY,
                              ref strIPD, Color.yellow);
-            GuiHelper.StereoBox(VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY,
+			GuiHelper.StereoBox (VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY,
                              ref strFOV, Color.white);
-            GuiHelper.StereoBox(VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY,
+			GuiHelper.StereoBox (VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY,
                              ref strResolutionEyeTexture, Color.white);
-            GuiHelper.StereoBox(VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY,
+			GuiHelper.StereoBox (VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY,
                              ref strLatencies, Color.white);
-        }
+		}
 
-        // Don't draw these vars if PlayerController is not present
-        if (PlayerController != null)
-        {
-            GuiHelper.StereoBox(VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY,
+		// Don't draw these vars if PlayerController is not present
+		if (PlayerController != null) {
+			GuiHelper.StereoBox (VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY,
                                  ref strHeight, Color.yellow);
-            GuiHelper.StereoBox(VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY,
+			GuiHelper.StereoBox (VRVarsSX, y += StepY, VRVarsWidthX, VRVarsWidthY,
                                  ref strSpeedRotationMultipler, Color.white);
-        }
+		}
 #endif
 	}
 	
@@ -882,13 +876,12 @@ public class OVRMainMenu : MonoBehaviour
 	bool GUIShowRiftDetected ()
 	{
 #if !USE_NEW_GUI
-		if(RiftPresentTimeout > 0.0f)
-		{
+		if (RiftPresentTimeout > 0.0f) {
 			GuiHelper.StereoBox (StartX, StartY, WidthX, WidthY, 
 								 ref strRiftPresent, Color.white);
 		
 			return true;
-        }
+		}
 #else
 		if (RiftPresentTimeout < 0.0f)
 			DestroyImmediate (RiftPresentGUIObject);

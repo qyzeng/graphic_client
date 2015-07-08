@@ -28,7 +28,7 @@ namespace WP.Character
 				}
 				csm.Motor.MoveForward (csm.MotionVector.y);
 			} else {
-				csm.Motor.MoveBack (csm.MotionVector.y);
+				csm.Motor.MoveBack (-csm.MotionVector.y);
 			}
 			csm.AnimationControl.ForwardSpeed = csm.MotionVector.y;
 			csm.AnimationControl.SideSpeed = csm.MotionVector.x;
